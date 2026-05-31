@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Serbisch">
+<meta name="theme-color" content="#6366f1">
+<title>🇷🇸 Serbisch Lernen</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; padding: 0; background: #f8fafc; }
+#root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const SK = "srb_pro_v1";
+const load = () => { try { const s = localStorage.getItem(SK); return s ? JSON.parse(s) : null; } catch { return null; } };
+const save = (d) => { try { localStorage.setItem(SK, JSON.stringify(d)); } catch {} };
+const defState = () => ({ xp: 0, streak: 0, lastDate: null, mastered: {}, quizBest: {} });
+
+// ─── ALL VOCABULARY ───────────────────────────────────────────────────────────
+const ALL_UNITS = [
+  // ── A1: PERSONALPRONOMEN ────────────────────────────────────────────────────
+  {
+    id:"a1_pronouns", level:"A1", title:"Personalpronomen", emoji:"👤", color:"#FF6B6B",
+    words:[
+      {sr:"Ja",          cyr:"Ја",          de:"Ich",              pron:"ja",            img:"👤"},
+      {sr:"Ti",          cyr:"Ти",          de:"Du",               pron:"ti",            img:"👥"},
+      {sr:"On",          cyr:"Он",          de:"Er",               pron:"on",            img:"👨"},
+      {sr:"Ona",         cyr:"Она",         de:"Sie (weibl.)",     pron:"O-na",          img:"👩"},
+      {sr:"Ono",         cyr:"Оно",         de:"Es",               pron:"O-no",          img:"🔹"},
+      {sr:"Mi",          cyr:"Ми",          de:"Wir",              pron:"mi",            img:"👨‍👩‍👧"},
+      {sr:"Vi",          cyr:"Ви",          de:"Ihr / Sie (förmlich)", pron:"vi",        img:"👥"},
+      {sr:"Oni",         cyr:"Они",         de:"Sie (Plural m.)",  pron:"O-ni",          img:"👨‍👨‍👦"},
+      {sr:"One",         cyr:"Оне",         de:"Sie (Plural w.)",  pron:"O-ne",          img:"👩‍👩‍👧"},
+      {sr:"Moj",         cyr:"Мој",         de:"Mein (m.)",        pron:"moj",           img:"✋"},
+      {sr:"Moja",        cyr:"Моја",        de:"Meine (f.)",       pron:"MO-ja",         img:"✋"},
+      {sr:"Tvoj",        cyr:"Твој",        de:"Dein (m.)",        pron:"tvoj",          img:"☝️"},
+      {sr:"Naš",         cyr:"Наш",         de:"Unser",            pron:"nash",          img:"🤝"},
+      {sr:"Vaš",         cyr:"Ваш",         de:"Euer / Ihr (förmlich)", pron:"vash",    img:"👐"},
+      {sr:"Njihov",      cyr:"Њихов",       de:"Ihr (Plural)",     pron:"NJI-hov",       img:"👐"},
+      {sr:"Meni",        cyr:"Мени",        de:"Mir",              pron:"ME-ni",         img:"👆"},
+      {sr:"Tebi",        cyr:"Теби",        de:"Dir",              pron:"TE-bi",         img:"👆"},
+      {sr:"Njemu",       cyr:"Њему",        de:"Ihm",              pron:"NJE-mu",        img:"👆"},
+      {sr:"Njoj",        cyr:"Њој",         de:"Ihr",              pron:"njoj",          img:"👆"},
+      {sr:"Nama",        cyr:"Нама",        de:"Uns",              pron:"NA-ma",         img:"👐"},
+    ],
+    sentences:[
+      {sr:"Ja govorim srpski.",          de:"Ich spreche Serbisch."},
+      {sr:"Ti si moj prijatelj.",        de:"Du bist mein Freund."},
+      {sr:"On radi u Beogradu.",         de:"Er arbeitet in Belgrad."},
+      {sr:"Ona je moja sestra.",         de:"Sie ist meine Schwester."},
+      {sr:"Mi idemo kući.",              de:"Wir gehen nach Hause."},
+      {sr:"Vi ste dobrodošli.",          de:"Ihr seid willkommen."},
+      {sr:"Oni pričaju brzo.",           de:"Sie reden schnell."},
+    ]
+  },
+  // ── A1: BEGRÜSSUNGEN ────────────────────────────────────────────────────────
+  {
+    id:"a1_greet", level:"A1", title:"Begrüßungen", emoji:"👋", color:"#FF8C61",
+    words:[
+      {sr:"Zdravo",          cyr:"Здраво",          de:"Hallo",                   pron:"ZDRA-vo",        img:"👋"},
+      {sr:"Dobar dan",       cyr:"Добар дан",       de:"Guten Tag",               pron:"DO-bar dan",     img:"🌞"},
+      {sr:"Dobro jutro",     cyr:"Добро јутро",     de:"Guten Morgen",            pron:"DO-bro JU-tro",  img:"🌅"},
+      {sr:"Dobro veče",      cyr:"Добро вече",      de:"Guten Abend",             pron:"DO-bro VE-tʃe",  img:"🌙"},
+      {sr:"Laku noć",        cyr:"Лаку ноћ",        de:"Gute Nacht",              pron:"LA-ku notʃ",     img:"😴"},
+      {sr:"Doviđenja",       cyr:"Довиђења",        de:"Auf Wiedersehen",         pron:"do-vi-JE-nja",   img:"👋"},
+      {sr:"Ćao",             cyr:"Ћао",             de:"Tschüss",                 pron:"tʃao",           img:"✌️"},
+      {sr:"Kako si?",        cyr:"Како си?",        de:"Wie geht's dir?",         pron:"KA-ko si",       img:"🙂"},
+      {sr:"Kako ste?",       cyr:"Како сте?",       de:"Wie geht's Ihnen?",       pron:"KA-ko ste",      img:"🙂"},
+      {sr:"Dobro sam",       cyr:"Добро сам",       de:"Mir geht's gut",          pron:"DO-bro sam",     img:"😊"},
+      {sr:"Loše",            cyr:"Лоше",            de:"Schlecht",                pron:"LO-she",         img:"😞"},
+      {sr:"Tako tako",       cyr:"Тако тако",       de:"So lala",                 pron:"TA-ko TA-ko",    img:"😐"},
+      {sr:"Hvala",           cyr:"Хвала",           de:"Danke",                   pron:"HVA-la",         img:"🙏"},
+      {sr:"Hvala lepo",      cyr:"Хвала лепо",      de:"Danke schön",             pron:"HVA-la LE-po",   img:"🙏"},
+      {sr:"Nema na čemu",    cyr:"Нема на чему",    de:"Bitte / Gern geschehen",  pron:"NE-ma na CHE-mu",img:"😊"},
+      {sr:"Molim",           cyr:"Молим",           de:"Bitte",                   pron:"MO-lim",         img:"🫶"},
+      {sr:"Izvinite",        cyr:"Извините",        de:"Entschuldigung (förmlich)",pron:"iz-vi-NI-te",   img:"😅"},
+      {sr:"Oprosti",         cyr:"Опрости",         de:"Entschuldigung (informell)",pron:"o-PRO-sti",     img:"😅"},
+      {sr:"Da",              cyr:"Да",              de:"Ja",                      pron:"da",             img:"✅"},
+      {sr:"Ne",              cyr:"Не",              de:"Nein",                    pron:"ne",             img:"❌"},
+      {sr:"Možda",           cyr:"Можда",           de:"Vielleicht",              pron:"MOZH-da",        img:"🤔"},
+      {sr:"Ne razumem",      cyr:"Не разумем",      de:"Ich verstehe nicht",      pron:"ne RA-zu-mem",   img:"🤷"},
+      {sr:"Možeš li sporije?",cyr:"Можеш ли спорије?",de:"Kannst du langsamer sprechen?",pron:"MO-zhesh li SPO-ri-je",img:"🐢"},
+      {sr:"Kako se kaže...?",cyr:"Како се каже...?",de:"Wie sagt man...?",        pron:"KA-ko se KA-zhe",img:"💬"},
+      {sr:"Zovem se...",     cyr:"Зовем се...",     de:"Ich heiße...",            pron:"ZO-vem se",      img:"😀"},
+      {sr:"Odakle si?",      cyr:"Одакле си?",      de:"Woher kommst du?",        pron:"o-DAK-le si",    img:"🌍"},
+      {sr:"Koliko imaš godina?",cyr:"Колико имаш година?",de:"Wie alt bist du?", pron:"KO-li-ko I-mash",img:"🎂"},
+      {sr:"Prijatno",        cyr:"Пријатно",        de:"Freut mich",              pron:"pri-JAT-no",     img:"🤝"},
+      {sr:"Dobrodošli",      cyr:"Добродошли",      de:"Willkommen",              pron:"do-bro-DOSH-li", img:"🎉"},
+      {sr:"Srećno",          cyr:"Срећно",          de:"Viel Glück",              pron:"SRECH-no",       img:"🍀"},
+    ],
+    sentences:[
+      {sr:"Zdravo! Kako si?",            de:"Hallo! Wie geht's dir?"},
+      {sr:"Dobro sam, hvala. A ti?",     de:"Mir geht's gut, danke. Und dir?"},
+      {sr:"Zovem se Ana.",               de:"Ich heiße Ana."},
+      {sr:"Odakle si?",                  de:"Woher kommst du?"},
+      {sr:"Ja sam iz Nemačke.",          de:"Ich komme aus Deutschland."},
+      {sr:"Ne razumem srpski.",          de:"Ich verstehe kein Serbisch."},
+      {sr:"Možeš li sporije?",           de:"Kannst du langsamer sprechen?"},
+      {sr:"Koliko imaš godina?",         de:"Wie alt bist du?"},
+      {sr:"Imam dvadeset pet godina.",   de:"Ich bin fünfundzwanzig Jahre alt."},
+    ]
+  },
+  // ── A1: WICHTIGE VERBEN ──────────────────────────────────────────────────────
+  {
+    id:"a1_verbs", level:"A1", title:"Wichtige Verben", emoji:"⚡", color:"#4ECDC4",
+    words:[
+      {sr:"Biti",        cyr:"Бити",        de:"Sein",             pron:"BI-ti",         img:"🌟"},
+      {sr:"Jesam",       cyr:"Јесам",       de:"Ich bin",          pron:"JE-sam",        img:"👤"},
+      {sr:"Jesi",        cyr:"Јеси",        de:"Du bist",          pron:"JE-si",         img:"👥"},
+      {sr:"Jeste",       cyr:"Јесте",       de:"Er/Sie/Es ist",    pron:"JE-ste",        img:"🔹"},
+      {sr:"Imati",       cyr:"Имати",       de:"Haben",            pron:"I-ma-ti",       img:"✋"},
+      {sr:"Imam",        cyr:"Имам",        de:"Ich habe",         pron:"I-mam",         img:"👤"},
+      {sr:"Ići",         cyr:"Ићи",         de:"Gehen",            pron:"I-chi",         img:"🚶"},
+      {sr:"Idem",        cyr:"Идем",        de:"Ich gehe",         pron:"I-dem",         img:"🚶"},
+      {sr:"Doći",        cyr:"Доћи",        de:"Kommen",           pron:"DO-chi",        img:"🏃"},
+      {sr:"Dolazim",     cyr:"Долазим",     de:"Ich komme",        pron:"do-LA-zim",     img:"🏃"},
+      {sr:"Videti",      cyr:"Видети",      de:"Sehen",            pron:"VI-de-ti",      img:"👁️"},
+      {sr:"Vidim",       cyr:"Видим",       de:"Ich sehe",         pron:"VI-dim",        img:"👁️"},
+      {sr:"Znati",       cyr:"Знати",       de:"Wissen / Kennen",  pron:"ZNA-ti",        img:"🧠"},
+      {sr:"Znam",        cyr:"Знам",        de:"Ich weiß",         pron:"znam",          img:"🧠"},
+      {sr:"Ne znam",     cyr:"Не знам",     de:"Ich weiß nicht",   pron:"ne znam",       img:"🤷"},
+      {sr:"Hteti",       cyr:"Хтети",       de:"Wollen",           pron:"HTE-ti",        img:"💪"},
+      {sr:"Hoću",        cyr:"Хоћу",        de:"Ich will",         pron:"HO-chu",        img:"💪"},
+      {sr:"Moći",        cyr:"Моћи",        de:"Können",           pron:"MO-chi",        img:"💡"},
+      {sr:"Mogu",        cyr:"Могу",        de:"Ich kann",         pron:"MO-gu",         img:"💡"},
+      {sr:"Ne mogu",     cyr:"Не могу",     de:"Ich kann nicht",   pron:"ne MO-gu",      img:"🚫"},
+      {sr:"Morati",      cyr:"Морати",      de:"Müssen",           pron:"mo-RA-ti",      img:"⚠️"},
+      {sr:"Moram",       cyr:"Морам",       de:"Ich muss",         pron:"MO-ram",        img:"⚠️"},
+      {sr:"Smeti",       cyr:"Смети",       de:"Dürfen",           pron:"SME-ti",        img:"✅"},
+      {sr:"Smem",        cyr:"Смем",        de:"Ich darf",         pron:"smem",          img:"✅"},
+      {sr:"Govoriti",    cyr:"Говорити",    de:"Sprechen",         pron:"go-VO-ri-ti",   img:"🗣️"},
+      {sr:"Govorim",     cyr:"Говорим",     de:"Ich spreche",      pron:"go-VO-rim",     img:"🗣️"},
+      {sr:"Razumeti",    cyr:"Разумети",    de:"Verstehen",        pron:"ra-zu-ME-ti",   img:"💡"},
+      {sr:"Jesti",       cyr:"Јести",       de:"Essen",            pron:"JES-ti",        img:"🍽️"},
+      {sr:"Jedem",       cyr:"Једем",       de:"Ich esse",         pron:"JE-dem",        img:"🍽️"},
+      {sr:"Piti",        cyr:"Пити",        de:"Trinken",          pron:"PI-ti",         img:"🥤"},
+    ],
+    sentences:[
+      {sr:"Ja sam iz Srbije.",           de:"Ich bin aus Serbien."},
+      {sr:"Imam brata i sestru.",        de:"Ich habe einen Bruder und eine Schwester."},
+      {sr:"Znam malo srpski.",           de:"Ich kann ein bisschen Serbisch."},
+      {sr:"Mogu li da pomognem?",        de:"Kann ich helfen?"},
+      {sr:"Moram da idem.",              de:"Ich muss gehen."},
+      {sr:"Hoću da naučim srpski.",      de:"Ich will Serbisch lernen."},
+      {sr:"Govorim nemačkom.",           de:"Ich spreche Deutsch."},
+      {sr:"Ne razumem šta kažeš.",       de:"Ich verstehe nicht, was du sagst."},
+    ]
+  },
+  // ── A1: ZAHLEN ───────────────────────────────────────────────────────────────
+  {
+    id:"a1_num", level:"A1", title:"Zahlen 1–1000", emoji:"🔢", color:"#45B7D1",
+    words:[
+      {sr:"Jedan",       cyr:"Један",       de:"Eins",             pron:"JE-dan",        img:"1️⃣"},
+      {sr:"Dva",         cyr:"Два",         de:"Zwei",             pron:"dva",           img:"2️⃣"},
+      {sr:"Tri",         cyr:"Три",         de:"Drei",             pron:"tri",           img:"3️⃣"},
+      {sr:"Četiri",      cyr:"Четири",      de:"Vier",             pron:"CHE-ti-ri",     img:"4️⃣"},
+      {sr:"Pet",         cyr:"Пет",         de:"Fünf",             pron:"pet",           img:"5️⃣"},
+      {sr:"Šest",        cyr:"Шест",        de:"Sechs",            pron:"shest",         img:"6️⃣"},
+      {sr:"Sedam",       cyr:"Седам",       de:"Sieben",           pron:"SE-dam",        img:"7️⃣"},
+      {sr:"Osam",        cyr:"Осам",        de:"Acht",             pron:"O-sam",         img:"8️⃣"},
+      {sr:"Devet",       cyr:"Девет",       de:"Neun",             pron:"DE-vet",        img:"9️⃣"},
+      {sr:"Deset",       cyr:"Десет",       de:"Zehn",             pron:"DE-set",        img:"🔟"},
+      {sr:"Jedanaest",   cyr:"Једанаест",   de:"Elf",              pron:"je-DA-na-est",  img:"🔢"},
+      {sr:"Dvanaest",    cyr:"Дванаест",    de:"Zwölf",            pron:"DVA-na-est",    img:"🔢"},
+      {sr:"Trinaest",    cyr:"Тринаест",    de:"Dreizehn",         pron:"TRI-na-est",    img:"🔢"},
+      {sr:"Petnaest",    cyr:"Петнаест",    de:"Fünfzehn",         pron:"PET-na-est",    img:"🔢"},
+      {sr:"Dvadeset",    cyr:"Двадесет",    de:"Zwanzig",          pron:"DVA-de-set",    img:"💯"},
+      {sr:"Trideset",    cyr:"Тридесет",    de:"Dreißig",          pron:"TRI-de-set",    img:"🔢"},
+      {sr:"Četrdeset",   cyr:"Четрдесет",   de:"Vierzig",          pron:"CHETR-de-set",  img:"🔢"},
+      {sr:"Pedeset",     cyr:"Педесет",     de:"Fünfzig",          pron:"PE-de-set",     img:"🔢"},
+      {sr:"Šezdeset",    cyr:"Шездесет",    de:"Sechzig",          pron:"SHEZ-de-set",   img:"🔢"},
+      {sr:"Sedamdeset",  cyr:"Седамдесет",  de:"Siebzig",          pron:"SE-dam-de-set", img:"🔢"},
+      {sr:"Osamdeset",   cyr:"Осамдесет",   de:"Achtzig",          pron:"O-sam-de-set",  img:"🔢"},
+      {sr:"Devedeset",   cyr:"Деведесет",   de:"Neunzig",          pron:"DE-ve-de-set",  img:"🔢"},
+      {sr:"Sto",         cyr:"Сто",         de:"Hundert",          pron:"sto",           img:"💯"},
+      {sr:"Dvesta",      cyr:"Двеста",      de:"Zweihundert",      pron:"DVE-sta",       img:"🔢"},
+      {sr:"Hiljada",     cyr:"Хиљада",      de:"Tausend",          pron:"HI-lja-da",     img:"🔢"},
+      {sr:"Nula",        cyr:"Нула",        de:"Null",             pron:"NU-la",         img:"0️⃣"},
+      {sr:"Pola",        cyr:"Пола",        de:"Halb",             pron:"PO-la",         img:"½"},
+      {sr:"Četvrtina",   cyr:"Четвртина",   de:"Viertel",          pron:"chet-VR-ti-na", img:"¼"},
+    ],
+    sentences:[
+      {sr:"Imam dvadeset godina.",       de:"Ich bin zwanzig Jahre alt."},
+      {sr:"To košta petnaest evra.",     de:"Das kostet fünfzehn Euro."},
+      {sr:"Daj mi dva, molim.",          de:"Gib mir zwei, bitte."},
+      {sr:"Ima hiljadu studenata.",      de:"Es gibt tausend Studenten."},
+    ]
+  },
+  // ── A1: FARBEN ───────────────────────────────────────────────────────────────
+  {
+    id:"a1_colors", level:"A1", title:"Farben", emoji:"🎨", color:"#96CEB4",
+    words:[
+      {sr:"Crvena",       cyr:"Црвена",      de:"Rot",              pron:"TSR-ve-na",     img:"🔴"},
+      {sr:"Plava",        cyr:"Плава",       de:"Blau",             pron:"PLA-va",        img:"🔵"},
+      {sr:"Zelena",       cyr:"Зелена",      de:"Grün",             pron:"ZE-le-na",      img:"🟢"},
+      {sr:"Žuta",         cyr:"Жута",        de:"Gelb",             pron:"ZHU-ta",        img:"🟡"},
+      {sr:"Bela",         cyr:"Бела",        de:"Weiß",             pron:"BE-la",         img:"⬜"},
+      {sr:"Crna",         cyr:"Црна",        de:"Schwarz",          pron:"TSR-na",        img:"⬛"},
+      {sr:"Siva",         cyr:"Сива",        de:"Grau",             pron:"SI-va",         img:"🩶"},
+      {sr:"Roze",         cyr:"Розе",        de:"Rosa",             pron:"RO-ze",         img:"🌸"},
+      {sr:"Narandžasta",  cyr:"Наранџаста",  de:"Orange",           pron:"na-ran-JA-sta", img:"🟠"},
+      {sr:"Ljubičasta",   cyr:"Љубичаста",   de:"Lila / Violett",   pron:"lju-bi-CHA-sta",img:"🟣"},
+      {sr:"Braon",        cyr:"Браон",       de:"Braun",            pron:"bra-ON",        img:"🟤"},
+      {sr:"Zlatna",       cyr:"Златна",      de:"Gold",             pron:"ZLAT-na",       img:"🌟"},
+      {sr:"Srebrna",      cyr:"Сребрна",     de:"Silber",           pron:"SREB-r-na",     img:"⚪"},
+      {sr:"Tamna",        cyr:"Тамна",       de:"Dunkel",           pron:"TAM-na",        img:"🌑"},
+      {sr:"Svetla",       cyr:"Светла",      de:"Hell",             pron:"SVET-la",       img:"☀️"},
+    ],
+    sentences:[
+      {sr:"Nebo je plavo.",              de:"Der Himmel ist blau."},
+      {sr:"Trava je zelena.",            de:"Das Gras ist grün."},
+      {sr:"Moja omiljena boja je crvena.", de:"Meine Lieblingsfarbe ist Rot."},
+      {sr:"Kupila sam crnu torbu.",      de:"Ich habe eine schwarze Tasche gekauft."},
+    ]
+  },
+  // ── A1: FAMILIE ──────────────────────────────────────────────────────────────
+  {
+    id:"a1_fam", level:"A1", title:"Familie", emoji:"👨‍👩‍👧", color:"#DDA0DD",
+    words:[
+      {sr:"Porodica",    cyr:"Породица",    de:"Familie",          pron:"po-RO-di-tsa",  img:"👨‍👩‍👧"},
+      {sr:"Majka",       cyr:"Мајка",       de:"Mutter",           pron:"MAJ-ka",        img:"👩"},
+      {sr:"Otac",        cyr:"Отац",        de:"Vater",            pron:"O-tats",        img:"👨"},
+      {sr:"Roditelji",   cyr:"Родитељи",    de:"Eltern",           pron:"ro-DI-te-lji",  img:"👫"},
+      {sr:"Brat",        cyr:"Брат",        de:"Bruder",           pron:"brat",          img:"👦"},
+      {sr:"Sestra",      cyr:"Сестра",      de:"Schwester",        pron:"SE-stra",       img:"👧"},
+      {sr:"Sin",         cyr:"Син",         de:"Sohn",             pron:"sin",           img:"👦"},
+      {sr:"Ćerka",       cyr:"Ћерка",       de:"Tochter",          pron:"CHER-ka",       img:"👧"},
+      {sr:"Baka",        cyr:"Бака",        de:"Großmutter",       pron:"BA-ka",         img:"👵"},
+      {sr:"Deka",        cyr:"Деда",        de:"Großvater",        pron:"DE-da",         img:"👴"},
+      {sr:"Ujak",        cyr:"Ујак",        de:"Onkel (mütterl.)", pron:"U-jak",         img:"👨"},
+      {sr:"Stric",       cyr:"Стриц",       de:"Onkel (väterl.)",  pron:"stric",         img:"👨"},
+      {sr:"Tetka",       cyr:"Тетка",       de:"Tante",            pron:"TET-ka",        img:"👩"},
+      {sr:"Bratić",      cyr:"Братић",      de:"Cousin",           pron:"BRA-tich",      img:"👦"},
+      {sr:"Sestrična",   cyr:"Сестрична",   de:"Cousine",          pron:"se-STRICH-na",  img:"👧"},
+      {sr:"Deca",        cyr:"Деца",        de:"Kinder",           pron:"DE-tsa",        img:"👶"},
+      {sr:"Beba",        cyr:"Беба",        de:"Baby",             pron:"BE-ba",         img:"👶"},
+      {sr:"Muž",         cyr:"Муж",         de:"Ehemann",          pron:"muzh",          img:"💍"},
+      {sr:"Žena",        cyr:"Жена",        de:"Ehefrau",          pron:"ZHE-na",        img:"💍"},
+      {sr:"Unuk",        cyr:"Унук",        de:"Enkel",            pron:"U-nuk",         img:"👦"},
+      {sr:"Prijatelj",   cyr:"Пријатељ",    de:"Freund",           pron:"pri-JA-telj",   img:"🤝"},
+      {sr:"Prijateljica",cyr:"Пријатељица", de:"Freundin",         pron:"pri-ja-TELJ-i-tsa",img:"🤝"},
+      {sr:"Komšija",     cyr:"Комшија",     de:"Nachbar",          pron:"KOM-shi-ja",    img:"🏘️"},
+      {sr:"Kolega",      cyr:"Колега",      de:"Kollege",          pron:"KO-le-ga",      img:"👔"},
+    ],
+    sentences:[
+      {sr:"Imam brata i sestru.",        de:"Ich habe einen Bruder und eine Schwester."},
+      {sr:"Moja majka se zove Marija.",  de:"Meine Mutter heißt Marija."},
+      {sr:"On ima dvoje dece.",          de:"Er hat zwei Kinder."},
+      {sr:"Živim sa roditeljima.",       de:"Ich wohne bei meinen Eltern."},
+    ]
+  },
+  // ── A1: ESSEN & TRINKEN ──────────────────────────────────────────────────────
+  {
+    id:"a1_food", level:"A1", title:"Essen & Trinken", emoji:"🍽️", color:"#FFEAA7",
+    words:[
+      {sr:"Hleb",        cyr:"Хлеб",        de:"Brot",             pron:"hleb",          img:"🍞"},
+      {sr:"Voda",        cyr:"Вода",        de:"Wasser",           pron:"VO-da",         img:"💧"},
+      {sr:"Meso",        cyr:"Месо",        de:"Fleisch",          pron:"ME-so",         img:"🥩"},
+      {sr:"Riba",        cyr:"Риба",        de:"Fisch",            pron:"RI-ba",         img:"🐟"},
+      {sr:"Kafa",        cyr:"Кафа",        de:"Kaffee",           pron:"KA-fa",         img:"☕"},
+      {sr:"Čaj",         cyr:"Чај",         de:"Tee",              pron:"tʃaj",          img:"🍵"},
+      {sr:"Mleko",       cyr:"Млеко",       de:"Milch",            pron:"MLE-ko",        img:"🥛"},
+      {sr:"Jabuka",      cyr:"Јабука",      de:"Apfel",            pron:"JA-bu-ka",      img:"🍎"},
+      {sr:"Banana",      cyr:"Банана",      de:"Banane",           pron:"ba-NA-na",      img:"🍌"},
+      {sr:"Paradajz",    cyr:"Парадајз",    de:"Tomate",           pron:"pa-ra-DAJZ",    img:"🍅"},
+      {sr:"Krompir",     cyr:"Кромпир",     de:"Kartoffel",        pron:"krom-PIR",      img:"🥔"},
+      {sr:"Jaje",        cyr:"Јаје",        de:"Ei",               pron:"JA-je",         img:"🥚"},
+      {sr:"Sir",         cyr:"Сир",         de:"Käse",             pron:"sir",           img:"🧀"},
+      {sr:"Puter",       cyr:"Путер",       de:"Butter",           pron:"PU-ter",        img:"🧈"},
+      {sr:"Šećer",       cyr:"Шећер",       de:"Zucker",           pron:"SHE-tʃer",      img:"🍬"},
+      {sr:"So",          cyr:"Со",          de:"Salz",             pron:"so",            img:"🧂"},
+      {sr:"Pivo",        cyr:"Пиво",        de:"Bier",             pron:"PI-vo",         img:"🍺"},
+      {sr:"Vino",        cyr:"Вино",        de:"Wein",             pron:"VI-no",         img:"🍷"},
+      {sr:"Supa",        cyr:"Супа",        de:"Suppe",            pron:"SU-pa",         img:"🍲"},
+      {sr:"Pirinač",     cyr:"Пиринач",     de:"Reis",             pron:"pi-RI-natʃ",    img:"🍚"},
+      {sr:"Testenina",   cyr:"Тестенина",   de:"Nudeln / Pasta",   pron:"te-ste-NI-na",  img:"🍝"},
+      {sr:"Salata",      cyr:"Салата",      de:"Salat",            pron:"sa-LA-ta",      img:"🥗"},
+      {sr:"Torta",       cyr:"Торта",       de:"Kuchen / Torte",   pron:"TOR-ta",        img:"🎂"},
+      {sr:"Sladoled",    cyr:"Сладолед",    de:"Eis",              pron:"sla-DO-led",    img:"🍦"},
+      {sr:"Čokolada",    cyr:"Чоколада",    de:"Schokolade",       pron:"tʃo-ko-LA-da",  img:"🍫"},
+      {sr:"Voće",        cyr:"Воће",        de:"Obst",             pron:"VO-che",        img:"🍓"},
+      {sr:"Povrće",      cyr:"Поврће",      de:"Gemüse",           pron:"POV-r-che",     img:"🥦"},
+      {sr:"Piletina",    cyr:"Пилетина",    de:"Hähnchen",         pron:"pi-LE-ti-na",   img:"🍗"},
+      {sr:"Jagnjetina",  cyr:"Јагњетина",   de:"Lammfleisch",      pron:"jag-NJE-ti-na", img:"🐑"},
+      {sr:"Sok",         cyr:"Сок",         de:"Saft",             pron:"sok",           img:"🥤"},
+    ],
+    sentences:[
+      {sr:"Hoću kafu, molim.",           de:"Ich möchte Kaffee, bitte."},
+      {sr:"Ja ne jedem meso.",           de:"Ich esse kein Fleisch."},
+      {sr:"Ovo je ukusno!",              de:"Das ist lecker!"},
+      {sr:"Šta ima za ručak?",           de:"Was gibt es zum Mittagessen?"},
+      {sr:"Imam alergiju na mleko.",     de:"Ich habe eine Milchallergie."},
+      {sr:"Donesi mi vodu, molim.",      de:"Bring mir Wasser, bitte."},
+    ]
+  },
+  // ── A1: KÖRPER ───────────────────────────────────────────────────────────────
+  {
+    id:"a1_body", level:"A1", title:"Körper", emoji:"🫀", color:"#FFB347",
+    words:[
+      {sr:"Glava",       cyr:"Глава",       de:"Kopf",             pron:"GLA-va",        img:"🗣️"},
+      {sr:"Lice",        cyr:"Лице",        de:"Gesicht",          pron:"LI-tse",        img:"😊"},
+      {sr:"Oko",         cyr:"Око",         de:"Auge",             pron:"O-ko",          img:"👁️"},
+      {sr:"Nos",         cyr:"Нос",         de:"Nase",             pron:"nos",           img:"👃"},
+      {sr:"Usta",        cyr:"Уста",        de:"Mund",             pron:"U-sta",         img:"👄"},
+      {sr:"Zub",         cyr:"Зуб",         de:"Zahn",             pron:"zub",           img:"🦷"},
+      {sr:"Uho",         cyr:"Ухо",         de:"Ohr",              pron:"U-ho",          img:"👂"},
+      {sr:"Kosa",        cyr:"Коса",        de:"Haar",             pron:"KO-sa",         img:"💇"},
+      {sr:"Vrat",        cyr:"Врат",        de:"Hals",             pron:"vrat",          img:"🧣"},
+      {sr:"Rame",        cyr:"Раме",        de:"Schulter",         pron:"RA-me",         img:"💪"},
+      {sr:"Ruka",        cyr:"Рука",        de:"Arm / Hand",       pron:"RU-ka",         img:"🦾"},
+      {sr:"Prst",        cyr:"Прст",        de:"Finger",           pron:"prst",          img:"👆"},
+      {sr:"Stomak",      cyr:"Стомак",      de:"Bauch",            pron:"STO-mak",       img:"🤰"},
+      {sr:"Leđa",        cyr:"Леђа",        de:"Rücken",           pron:"LE-dja",        img:"🔙"},
+      {sr:"Noga",        cyr:"Нога",        de:"Bein / Fuß",       pron:"NO-ga",         img:"🦵"},
+      {sr:"Koleno",      cyr:"Колено",      de:"Knie",             pron:"KO-le-no",      img:"🦵"},
+      {sr:"Srce",        cyr:"Срце",        de:"Herz",             pron:"SR-tse",        img:"❤️"},
+      {sr:"Mozak",       cyr:"Мозак",       de:"Gehirn",           pron:"MO-zak",        img:"🧠"},
+      {sr:"Koža",        cyr:"Кожа",        de:"Haut",             pron:"KO-zha",        img:"🧴"},
+      {sr:"Kost",        cyr:"Кост",        de:"Knochen",          pron:"kost",          img:"🦴"},
+    ],
+    sentences:[
+      {sr:"Boli me glava.",              de:"Ich habe Kopfschmerzen."},
+      {sr:"Imam problem sa leđima.",     de:"Ich habe Rückenprobleme."},
+      {sr:"Oči su mi zelene.",           de:"Meine Augen sind grün."},
+    ]
+  },
+  // ── A2: ZEITANGABEN ──────────────────────────────────────────────────────────
+  {
+    id:"a2_time", level:"A2", title:"Zeit & Datum", emoji:"🕐", color:"#74B9FF",
+    words:[
+      {sr:"Danas",        cyr:"Данас",       de:"Heute",            pron:"DA-nas",        img:"📅"},
+      {sr:"Sutra",        cyr:"Сутра",       de:"Morgen",           pron:"SU-tra",        img:"⏭️"},
+      {sr:"Juče",         cyr:"Јуче",        de:"Gestern",          pron:"JU-tʃe",        img:"⏮️"},
+      {sr:"Sada",         cyr:"Сада",        de:"Jetzt",            pron:"SA-da",         img:"⏺️"},
+      {sr:"Uskoro",       cyr:"Ускоро",      de:"Bald",             pron:"US-ko-ro",      img:"⏩"},
+      {sr:"Uvek",         cyr:"Увек",        de:"Immer",            pron:"U-vek",         img:"♾️"},
+      {sr:"Nikad",        cyr:"Никад",       de:"Nie",              pron:"NI-kad",        img:"🚫"},
+      {sr:"Često",        cyr:"Често",       de:"Oft",              pron:"CHES-to",       img:"🔁"},
+      {sr:"Ponekad",      cyr:"Понекад",     de:"Manchmal",         pron:"PO-ne-kad",     img:"↕️"},
+      {sr:"Retko",        cyr:"Ретко",       de:"Selten",           pron:"RET-ko",        img:"🔹"},
+      {sr:"Ponedeljak",   cyr:"Понедељак",   de:"Montag",           pron:"po-ne-DE-ljak", img:"📋"},
+      {sr:"Utorak",       cyr:"Уторак",      de:"Dienstag",         pron:"U-to-rak",      img:"📋"},
+      {sr:"Sreda",        cyr:"Среда",       de:"Mittwoch",         pron:"SRE-da",        img:"📋"},
+      {sr:"Četvrtak",     cyr:"Четвртак",    de:"Donnerstag",       pron:"tʃe-TVR-tak",   img:"📋"},
+      {sr:"Petak",        cyr:"Петак",       de:"Freitag",          pron:"PE-tak",        img:"🎉"},
+      {sr:"Subota",       cyr:"Субота",      de:"Samstag",          pron:"SU-bo-ta",      img:"😎"},
+      {sr:"Nedelja",      cyr:"Недеља",      de:"Sonntag",          pron:"NE-de-lja",     img:"⛪"},
+      {sr:"Januar",       cyr:"Јануар",      de:"Januar",           pron:"JA-nu-ar",      img:"❄️"},
+      {sr:"Februar",      cyr:"Фебруар",     de:"Februar",          pron:"fe-BRU-ar",     img:"❄️"},
+      {sr:"Mart",         cyr:"Март",        de:"März",             pron:"mart",          img:"🌱"},
+      {sr:"April",        cyr:"Април",       de:"April",            pron:"a-PRIL",        img:"🌸"},
+      {sr:"Maj",          cyr:"Мај",         de:"Mai",              pron:"maj",           img:"🌼"},
+      {sr:"Jun",          cyr:"Јун",         de:"Juni",             pron:"jun",           img:"☀️"},
+      {sr:"Jul",          cyr:"Јул",         de:"Juli",             pron:"jul",           img:"🏖️"},
+      {sr:"Avgust",       cyr:"Август",      de:"August",           pron:"AV-gust",       img:"🌻"},
+      {sr:"Septembar",    cyr:"Септембар",   de:"September",        pron:"sep-TEM-bar",   img:"🍂"},
+      {sr:"Oktobar",      cyr:"Октобар",     de:"Oktober",          pron:"ok-TO-bar",     img:"🎃"},
+      {sr:"Novembar",     cyr:"Новембар",    de:"November",         pron:"no-VEM-bar",    img:"🍁"},
+      {sr:"Decembar",     cyr:"Децембар",    de:"Dezember",         pron:"de-TEM-bar",    img:"🎄"},
+      {sr:"Sat",          cyr:"Сат",         de:"Stunde / Uhr",     pron:"sat",           img:"⏰"},
+      {sr:"Minut",        cyr:"Минут",       de:"Minute",           pron:"MI-nut",        img:"⏱️"},
+      {sr:"Dan",          cyr:"Дан",         de:"Tag",              pron:"dan",           img:"📆"},
+      {sr:"Nedelja",      cyr:"Недеља",      de:"Woche",            pron:"NE-de-lja",     img:"📅"},
+      {sr:"Mesec",        cyr:"Месец",       de:"Monat",            pron:"ME-sets",       img:"🌙"},
+      {sr:"Godina",       cyr:"Година",      de:"Jahr",             pron:"GO-di-na",      img:"📅"},
+    ],
+    sentences:[
+      {sr:"Danas je ponedeljak.",        de:"Heute ist Montag."},
+      {sr:"Sutra idem na posao.",        de:"Morgen gehe ich zur Arbeit."},
+      {sr:"Rodjen sam u aprilu.",        de:"Ich bin im April geboren."},
+      {sr:"Sastanak je u tri sata.",     de:"Das Meeting ist um drei Uhr."},
+    ]
+  },
+  // ── A2: ADJEKTIVE ────────────────────────────────────────────────────────────
+  {
+    id:"a2_adjectives", level:"A2", title:"Adjektive", emoji:"✨", color:"#A8E6CF",
+    words:[
+      {sr:"Dobar",       cyr:"Добар",       de:"Gut",              pron:"DO-bar",        img:"👍"},
+      {sr:"Loš",         cyr:"Лош",         de:"Schlecht",         pron:"losh",          img:"👎"},
+      {sr:"Velik",       cyr:"Велик",       de:"Groß",             pron:"VE-lik",        img:"🔆"},
+      {sr:"Mali",        cyr:"Мали",        de:"Klein",            pron:"MA-li",         img:"🔅"},
+      {sr:"Lep",         cyr:"Леп",         de:"Schön",            pron:"lep",           img:"😍"},
+      {sr:"Ružan",       cyr:"Ружан",       de:"Hässlich",         pron:"RU-zhan",       img:"😖"},
+      {sr:"Nov",         cyr:"Нов",         de:"Neu",              pron:"nov",           img:"✨"},
+      {sr:"Star",        cyr:"Стар",        de:"Alt",              pron:"star",          img:"🏚️"},
+      {sr:"Brz",         cyr:"Брз",         de:"Schnell",          pron:"brz",           img:"⚡"},
+      {sr:"Spor",        cyr:"Спор",        de:"Langsam",          pron:"spor",          img:"🐢"},
+      {sr:"Topao",       cyr:"Топао",       de:"Warm",             pron:"TO-pao",        img:"🌡️"},
+      {sr:"Hladan",      cyr:"Хладан",      de:"Kalt",             pron:"HLA-dan",       img:"🧊"},
+      {sr:"Jak",         cyr:"Јак",         de:"Stark",            pron:"jak",           img:"💪"},
+      {sr:"Slab",        cyr:"Слаб",        de:"Schwach",          pron:"slab",          img:"😓"},
+      {sr:"Pametan",     cyr:"Паметан",     de:"Klug",             pron:"PA-me-tan",     img:"🧠"},
+      {sr:"Glup",        cyr:"Глуп",        de:"Dumm",             pron:"glup",          img:"😶"},
+      {sr:"Bogat",       cyr:"Богат",       de:"Reich",            pron:"BO-gat",        img:"💰"},
+      {sr:"Siromašan",   cyr:"Сиромашан",   de:"Arm",              pron:"si-ro-MA-shan", img:"😔"},
+      {sr:"Srećan",      cyr:"Срећан",      de:"Glücklich",        pron:"SRE-tʃan",      img:"😄"},
+      {sr:"Tužan",       cyr:"Тужан",       de:"Traurig",          pron:"TU-zhan",       img:"😢"},
+      {sr:"Umoran",      cyr:"Уморан",      de:"Müde",             pron:"u-MO-ran",      img:"😴"},
+      {sr:"Budan",       cyr:"Будан",       de:"Wach",             pron:"BU-dan",        img:"😎"},
+      {sr:"Gladan",      cyr:"Гладан",      de:"Hungrig",          pron:"GLA-dan",       img:"🍽️"},
+      {sr:"Sit",         cyr:"Сит",         de:"Satt",             pron:"sit",           img:"😊"},
+      {sr:"Žedan",       cyr:"Жедан",       de:"Durstig",          pron:"ZHE-dan",       img:"💧"},
+      {sr:"Bolestan",    cyr:"Болестан",     de:"Krank",            pron:"bo-LES-tan",    img:"🤒"},
+      {sr:"Zdrav",       cyr:"Здрав",       de:"Gesund",           pron:"zdrav",         img:"💚"},
+      {sr:"Čist",        cyr:"Чист",        de:"Sauber",           pron:"tʃist",         img:"🧹"},
+      {sr:"Prljav",      cyr:"Прљав",       de:"Schmutzig",        pron:"PR-ljav",       img:"🧺"},
+      {sr:"Težak",       cyr:"Тежак",       de:"Schwer",           pron:"TE-zhak",       img:"🏋️"},
+    ],
+    sentences:[
+      {sr:"On je jako pametan.",         de:"Er ist sehr klug."},
+      {sr:"Ova kuća je velika i lepa.",  de:"Dieses Haus ist groß und schön."},
+      {sr:"Osećam se umorno.",           de:"Ich fühle mich müde."},
+      {sr:"Voda je hladna.",             de:"Das Wasser ist kalt."},
+    ]
+  },
+  // ── A2: SATZBAUSTEINE ────────────────────────────────────────────────────────
+  {
+    id:"a2_phrases", level:"A2", title:"Satzbausteine", emoji:"🧩", color:"#FFB3BA",
+    words:[
+      {sr:"I",           cyr:"И",           de:"Und",              pron:"i",             img:"➕"},
+      {sr:"Ali",         cyr:"Али",         de:"Aber",             pron:"A-li",          img:"⚡"},
+      {sr:"Ili",         cyr:"Или",         de:"Oder",             pron:"I-li",          img:"↕️"},
+      {sr:"Jer",         cyr:"Јер",         de:"Weil / Denn",      pron:"jer",           img:"💡"},
+      {sr:"Ako",         cyr:"Ако",         de:"Wenn / Falls",     pron:"A-ko",          img:"❓"},
+      {sr:"Kada",        cyr:"Када",        de:"Als / Wenn",       pron:"KA-da",         img:"⏰"},
+      {sr:"Da",          cyr:"Да",          de:"Dass",             pron:"da",            img:"📝"},
+      {sr:"Zato što",    cyr:"Зато што",    de:"Weil",             pron:"ZA-to shto",    img:"💡"},
+      {sr:"Ipak",        cyr:"Ипак",        de:"Trotzdem",         pron:"I-pak",         img:"↪️"},
+      {sr:"Međutim",     cyr:"Међутим",     de:"Jedoch",           pron:"me-JU-tim",     img:"↔️"},
+      {sr:"Dakle",       cyr:"Дакле",       de:"Also",             pron:"DAK-le",        img:"➡️"},
+      {sr:"Na primer",   cyr:"На пример",   de:"Zum Beispiel",     pron:"na PRI-mer",    img:"📌"},
+      {sr:"Isto tako",   cyr:"Исто тако",   de:"Ebenfalls",        pron:"IS-to TA-ko",   img:"🔁"},
+      {sr:"Sem toga",    cyr:"Сем тога",    de:"Außerdem",         pron:"sem TO-ga",     img:"➕"},
+      {sr:"Pre nego",    cyr:"Пре него",    de:"Bevor",            pron:"pre NE-go",     img:"⏮️"},
+      {sr:"Nakon toga",  cyr:"Након тога",  de:"Danach",           pron:"NA-kon TO-ga",  img:"⏭️"},
+      {sr:"Ovde",        cyr:"Овде",        de:"Hier",             pron:"OV-de",         img:"📍"},
+      {sr:"Tamo",        cyr:"Тамо",        de:"Dort",             pron:"TA-mo",         img:"📍"},
+      {sr:"Gore",        cyr:"Горе",        de:"Oben",             pron:"GO-re",         img:"⬆️"},
+      {sr:"Dole",        cyr:"Доле",        de:"Unten",            pron:"DO-le",         img:"⬇️"},
+      {sr:"Ispred",      cyr:"Испред",      de:"Vor",              pron:"IS-pred",       img:"⬆️"},
+      {sr:"Iza",         cyr:"Иза",         de:"Hinter",           pron:"I-za",          img:"⬇️"},
+      {sr:"Pored",       cyr:"Поред",       de:"Neben",            pron:"PO-red",        img:"↔️"},
+      {sr:"Između",      cyr:"Између",      de:"Zwischen",         pron:"IZ-me-dje",     img:"↔️"},
+      {sr:"Mnogo",       cyr:"Много",       de:"Viel",             pron:"MNO-go",        img:"💯"},
+      {sr:"Malo",        cyr:"Мало",        de:"Wenig",            pron:"MA-lo",         img:"🔅"},
+      {sr:"Sve",         cyr:"Све",         de:"Alles",            pron:"sve",           img:"🌍"},
+      {sr:"Ništa",       cyr:"Ништа",       de:"Nichts",           pron:"NISH-ta",       img:"0️⃣"},
+      {sr:"Nešto",       cyr:"Нешто",       de:"Etwas",            pron:"NESH-to",       img:"🔹"},
+      {sr:"Neko",        cyr:"Неко",        de:"Jemand",           pron:"NE-ko",         img:"👤"},
+    ],
+    sentences:[
+      {sr:"Hoću kafu ili čaj.",          de:"Ich will Kaffee oder Tee."},
+      {sr:"Idem kući jer sam umoran.",   de:"Ich gehe nach Hause, weil ich müde bin."},
+      {sr:"Ako ima vremena, dođi.",      de:"Wenn du Zeit hast, komm."},
+      {sr:"Ovde je lepo.",               de:"Hier ist es schön."},
+      {sr:"Imam sve što mi treba.",      de:"Ich habe alles, was ich brauche."},
+      {sr:"Nešto nije u redu.",          de:"Etwas stimmt nicht."},
+    ]
+  },
+  // ── A2: ZUHAUSE ──────────────────────────────────────────────────────────────
+  {
+    id:"a2_house", level:"A2", title:"Zuhause", emoji:"🏠", color:"#87CEEB",
+    words:[
+      {sr:"Kuća",         cyr:"Кућа",        de:"Haus",             pron:"KU-tʃa",        img:"🏠"},
+      {sr:"Stan",         cyr:"Стан",        de:"Wohnung",          pron:"stan",          img:"🏢"},
+      {sr:"Soba",         cyr:"Соба",        de:"Zimmer",           pron:"SO-ba",         img:"🛋️"},
+      {sr:"Kuhinja",      cyr:"Кухиња",      de:"Küche",            pron:"ku-HI-nja",     img:"🍳"},
+      {sr:"Kupatilo",     cyr:"Купатило",    de:"Badezimmer",       pron:"ku-PA-ti-lo",   img:"🛁"},
+      {sr:"Spavaća soba", cyr:"Спаваћа соба",de:"Schlafzimmer",    pron:"spa-VA-tʃa",    img:"🛏️"},
+      {sr:"Dnevna soba",  cyr:"Дневна соба", de:"Wohnzimmer",      pron:"DNEV-na",       img:"🛋️"},
+      {sr:"Hodnik",       cyr:"Ходник",      de:"Flur",             pron:"HOD-nik",       img:"🚪"},
+      {sr:"Balkon",       cyr:"Балкон",      de:"Balkon",           pron:"bal-KON",       img:"🌿"},
+      {sr:"Podrum",       cyr:"Подрум",      de:"Keller",           pron:"PO-drum",       img:"⬇️"},
+      {sr:"Tavan",        cyr:"Таван",       de:"Dachboden",        pron:"TA-van",        img:"⬆️"},
+      {sr:"Vrata",        cyr:"Врата",       de:"Tür",              pron:"VRA-ta",        img:"🚪"},
+      {sr:"Prozor",       cyr:"Прозор",      de:"Fenster",          pron:"PRO-zor",       img:"🪟"},
+      {sr:"Pod",          cyr:"Под",         de:"Boden",            pron:"pod",           img:"⬜"},
+      {sr:"Plafon",       cyr:"Плафон",      de:"Decke",            pron:"PLA-fon",       img:"🔆"},
+      {sr:"Krevet",       cyr:"Кревет",      de:"Bett",             pron:"KRE-vet",       img:"🛏️"},
+      {sr:"Sto",          cyr:"Сто",         de:"Tisch",            pron:"sto",           img:"🪑"},
+      {sr:"Stolica",      cyr:"Столица",     de:"Stuhl",            pron:"STO-li-tsa",    img:"🪑"},
+      {sr:"Orman",        cyr:"Орман",       de:"Schrank",          pron:"OR-man",        img:"🗄️"},
+      {sr:"Lampa",        cyr:"Лампа",       de:"Lampe",            pron:"LAM-pa",        img:"💡"},
+      {sr:"Frižider",     cyr:"Фрижидер",    de:"Kühlschrank",      pron:"fri-ZHI-der",   img:"🧊"},
+      {sr:"Veš mašina",   cyr:"Веш машина",  de:"Waschmaschine",   pron:"vesh ma-SHI-na",img:"🧺"},
+    ],
+    sentences:[
+      {sr:"Živim u stanu u centru.",     de:"Ich wohne in einer Wohnung im Zentrum."},
+      {sr:"Gde je kupatilo?",            de:"Wo ist das Badezimmer?"},
+      {sr:"Kuhinja je velika.",          de:"Die Küche ist groß."},
+    ]
+  },
+  // ── A2: REISEN ───────────────────────────────────────────────────────────────
+  {
+    id:"a2_travel", level:"A2", title:"Reisen & Verkehr", emoji:"✈️", color:"#B5EAD7",
+    words:[
+      {sr:"Aerodrom",    cyr:"Аеродром",    de:"Flughafen",        pron:"a-e-ro-DROM",   img:"✈️"},
+      {sr:"Stanica",     cyr:"Станица",     de:"Bahnhof",          pron:"STA-ni-tsa",    img:"🚂"},
+      {sr:"Autobus",     cyr:"Аутобус",     de:"Bus",              pron:"au-to-BUS",     img:"🚌"},
+      {sr:"Voz",         cyr:"Воз",         de:"Zug",              pron:"voz",           img:"🚆"},
+      {sr:"Avion",       cyr:"Авион",       de:"Flugzeug",         pron:"AV-i-on",       img:"✈️"},
+      {sr:"Taksi",       cyr:"Такси",       de:"Taxi",             pron:"TAK-si",        img:"🚕"},
+      {sr:"Tramvaj",     cyr:"Трамвај",     de:"Straßenbahn",      pron:"tram-VAJ",      img:"🚊"},
+      {sr:"Metro",       cyr:"Метро",       de:"U-Bahn",           pron:"ME-tro",        img:"🚇"},
+      {sr:"Bicikl",      cyr:"Бицикл",      de:"Fahrrad",          pron:"BI-tsikl",      img:"🚲"},
+      {sr:"Auto",        cyr:"Ауто",        de:"Auto",             pron:"AU-to",         img:"🚗"},
+      {sr:"Hotel",       cyr:"Хотел",       de:"Hotel",            pron:"ho-TEL",        img:"🏨"},
+      {sr:"Restoran",    cyr:"Ресторан",    de:"Restaurant",       pron:"re-sto-RAN",    img:"🍽️"},
+      {sr:"Muzej",       cyr:"Музеј",       de:"Museum",           pron:"MU-zej",        img:"🏛️"},
+      {sr:"Pasoš",       cyr:"Пасош",       de:"Reisepass",        pron:"PA-sosh",       img:"📘"},
+      {sr:"Karta",       cyr:"Карта",       de:"Fahrkarte / Karte",pron:"KAR-ta",        img:"🎫"},
+      {sr:"Rezervacija", cyr:"Резервација", de:"Reservierung",     pron:"re-zer-VA-tsi-ja",img:"📝"},
+      {sr:"Levo",        cyr:"Лево",        de:"Links",            pron:"LE-vo",         img:"⬅️"},
+      {sr:"Desno",       cyr:"Десно",       de:"Rechts",           pron:"DE-sno",        img:"➡️"},
+      {sr:"Pravo",       cyr:"Право",       de:"Geradeaus",        pron:"PRA-vo",        img:"⬆️"},
+      {sr:"Blizu",       cyr:"Близу",       de:"Nah / In der Nähe",pron:"BLI-zu",        img:"📍"},
+      {sr:"Daleko",      cyr:"Далеко",      de:"Weit",             pron:"da-LE-ko",      img:"🔭"},
+    ],
+    sentences:[
+      {sr:"Gde je najbliži hotel?",      de:"Wo ist das nächste Hotel?"},
+      {sr:"Jedna karta za Beograd.",     de:"Eine Fahrkarte nach Belgrad."},
+      {sr:"Imam rezervaciju.",           de:"Ich habe eine Reservierung."},
+      {sr:"Kako se ide do stanice?",     de:"Wie kommt man zum Bahnhof?"},
+    ]
+  },
+  // ── A2: EINKAUFEN ────────────────────────────────────────────────────────────
+  {
+    id:"a2_shop", level:"A2", title:"Einkaufen", emoji:"🛍️", color:"#FFEAA7",
+    words:[
+      {sr:"Prodavnica",  cyr:"Продавница",  de:"Geschäft",         pron:"pro-DAV-ni-tsa",img:"🏪"},
+      {sr:"Supermarket", cyr:"Супермаркет", de:"Supermarkt",       pron:"su-per-MAR-ket",img:"🛒"},
+      {sr:"Novac",       cyr:"Новац",       de:"Geld",             pron:"NO-vats",       img:"💰"},
+      {sr:"Evro",        cyr:"Евро",        de:"Euro",             pron:"EV-ro",         img:"💶"},
+      {sr:"Dinar",       cyr:"Динар",       de:"Dinar",            pron:"di-NAR",        img:"💵"},
+      {sr:"Cena",        cyr:"Цена",        de:"Preis",            pron:"TSE-na",        img:"🏷️"},
+      {sr:"Popust",      cyr:"Попуст",      de:"Rabatt",           pron:"PO-pust",       img:"🔖"},
+      {sr:"Skupo",       cyr:"Скупо",       de:"Teuer",            pron:"SKU-po",        img:"💸"},
+      {sr:"Jeftino",     cyr:"Јефтино",     de:"Günstig",          pron:"JEF-ti-no",     img:"🤑"},
+      {sr:"Odjeća",      cyr:"Одјећа",      de:"Kleidung",         pron:"od-JE-tʃa",     img:"👗"},
+      {sr:"Cipele",      cyr:"Ципеле",      de:"Schuhe",           pron:"TSI-pe-le",     img:"👟"},
+      {sr:"Košulja",     cyr:"Кошуља",      de:"Hemd",             pron:"ko-SHU-lja",    img:"👔"},
+      {sr:"Koliko košta?",cyr:"Колико кошта?",de:"Was kostet das?",pron:"KO-li-ko",      img:"💬"},
+      {sr:"Račun",       cyr:"Рачун",       de:"Rechnung",         pron:"RA-tʃun",       img:"🧾"},
+      {sr:"Karticu",     cyr:"Картицу",     de:"Karte (zahlen)",   pron:"KAR-ti-tsu",    img:"💳"},
+    ],
+    sentences:[
+      {sr:"Koliko košta ovo?",           de:"Wie viel kostet das?"},
+      {sr:"Mogu li platiti karticom?",   de:"Kann ich mit Karte zahlen?"},
+      {sr:"Ovo je preskupo.",            de:"Das ist zu teuer."},
+      {sr:"Tražim nešto jeftinije.",     de:"Ich suche etwas Günstigeres."},
+    ]
+  },
+  // ── B1: ARBEIT & BERUF ───────────────────────────────────────────────────────
+  {
+    id:"b1_work", level:"B1", title:"Arbeit & Beruf", emoji:"💼", color:"#B5EAD7",
+    words:[
+      {sr:"Posao",        cyr:"Посао",       de:"Arbeit / Job",     pron:"PO-sao",        img:"💼"},
+      {sr:"Kompanija",    cyr:"Компанија",   de:"Unternehmen",      pron:"kom-PA-ni-ja",  img:"🏢"},
+      {sr:"Kancelarija",  cyr:"Канцеларија", de:"Büro",             pron:"kan-tse-LA-ri-ja",img:"🖥️"},
+      {sr:"Plata",        cyr:"Плата",       de:"Gehalt",           pron:"PLA-ta",        img:"💰"},
+      {sr:"Odmor",        cyr:"Одмор",       de:"Urlaub",           pron:"OD-mor",        img:"🏖️"},
+      {sr:"Rok",          cyr:"Рок",         de:"Frist",            pron:"rok",           img:"⏰"},
+      {sr:"Projekat",     cyr:"Пројекат",    de:"Projekt",          pron:"pro-JE-kat",    img:"📊"},
+      {sr:"Sastanak",     cyr:"Састанак",    de:"Meeting",          pron:"SAS-ta-nak",    img:"👥"},
+      {sr:"Šef",          cyr:"Шеф",         de:"Chef",             pron:"shef",          img:"👔"},
+      {sr:"Kolega",       cyr:"Колега",      de:"Kollege",          pron:"KO-le-ga",      img:"🤝"},
+      {sr:"Ugovor",       cyr:"Уговор",      de:"Vertrag",          pron:"U-go-vor",      img:"📜"},
+      {sr:"Intervju",     cyr:"Интервју",    de:"Vorstellungsgespräch",pron:"IN-ter-vju", img:"🎤"},
+      {sr:"Iskustvo",     cyr:"Искуство",    de:"Erfahrung",        pron:"is-KUS-tvo",    img:"📚"},
+      {sr:"Veštine",      cyr:"Вештине",     de:"Fähigkeiten",      pron:"vesh-TI-ne",    img:"🛠️"},
+      {sr:"Pauza",        cyr:"Пауза",       de:"Pause",            pron:"PAU-za",        img:"☕"},
+      {sr:"Prekovremeni", cyr:"Прековремени",de:"Überstunden",      pron:"pre-ko-VRE-men",img:"⏱️"},
+      {sr:"Zaposlenje",   cyr:"Запослење",   de:"Anstellung",       pron:"za-POS-le-nje", img:"📋"},
+      {sr:"Penzija",      cyr:"Пензија",     de:"Rente",            pron:"PEN-zi-ja",     img:"👴"},
+    ],
+    sentences:[
+      {sr:"Radim u IT kompaniji.",       de:"Ich arbeite in einer IT-Firma."},
+      {sr:"Imam intervju sutra ujutru.", de:"Ich habe morgen früh ein Vorstellungsgespräch."},
+      {sr:"Tražim novi posao.",          de:"Ich suche einen neuen Job."},
+      {sr:"Dobio sam povišicu.",         de:"Ich habe eine Gehaltserhöhung bekommen."},
+    ]
+  },
+  // ── B1: GESUNDHEIT ───────────────────────────────────────────────────────────
+  {
+    id:"b1_health", level:"B1", title:"Gesundheit", emoji:"🏥", color:"#FFB3BA",
+    words:[
+      {sr:"Doktor",      cyr:"Доктор",      de:"Arzt",             pron:"DOK-tor",       img:"👨‍⚕️"},
+      {sr:"Bolnica",     cyr:"Болница",     de:"Krankenhaus",      pron:"BOL-ni-tsa",    img:"🏥"},
+      {sr:"Lek",         cyr:"Лек",         de:"Medikament",       pron:"lek",           img:"💊"},
+      {sr:"Recept",      cyr:"Рецепт",      de:"Rezept",           pron:"RE-tsept",      img:"📋"},
+      {sr:"Temperatura", cyr:"Температура", de:"Fieber",           pron:"tem-pe-RA-tu-ra",img:"🌡️"},
+      {sr:"Bol",         cyr:"Бол",         de:"Schmerz",          pron:"bol",           img:"😣"},
+      {sr:"Kašalj",      cyr:"Кашаљ",       de:"Husten",           pron:"KA-shalj",      img:"🤧"},
+      {sr:"Prehlada",    cyr:"Прехлада",    de:"Erkältung",        pron:"pre-HLA-da",    img:"🤒"},
+      {sr:"Alergija",    cyr:"Алергија",    de:"Allergie",         pron:"a-ler-GI-ja",   img:"🤧"},
+      {sr:"Operacija",   cyr:"Операција",   de:"Operation",        pron:"o-pe-RA-tsi-ja",img:"🏥"},
+      {sr:"Injekcija",   cyr:"Инјекција",   de:"Spritze",          pron:"in-JEK-tsi-ja", img:"💉"},
+      {sr:"Zdravlje",    cyr:"Здравље",     de:"Gesundheit",       pron:"ZDRAV-lje",     img:"💚"},
+      {sr:"Dijeta",      cyr:"Дијета",      de:"Diät",             pron:"di-JE-ta",      img:"🥗"},
+      {sr:"Vežbanje",    cyr:"Вежбање",     de:"Sport / Training", pron:"VEZH-ba-nje",   img:"🏋️"},
+    ],
+    sentences:[
+      {sr:"Boli me stomak.",             de:"Ich habe Bauchschmerzen."},
+      {sr:"Imam visoku temperaturu.",    de:"Ich habe hohes Fieber."},
+      {sr:"Imam alergiju na penicilin.", de:"Ich bin allergisch gegen Penizillin."},
+    ]
+  },
+  // ── B1: GEFÜHLE & MEINUNGEN ──────────────────────────────────────────────────
+  {
+    id:"b1_emotions", level:"B1", title:"Gefühle & Meinungen", emoji:"😊", color:"#FFCBA4",
+    words:[
+      {sr:"Srećan",      cyr:"Срећан",      de:"Glücklich",        pron:"SRE-tʃan",      img:"😄"},
+      {sr:"Tužan",       cyr:"Тужан",       de:"Traurig",          pron:"TU-zhan",       img:"😢"},
+      {sr:"Ljut",        cyr:"Љут",         de:"Wütend",           pron:"ljut",          img:"😠"},
+      {sr:"Uzbuđen",     cyr:"Узбуђен",     de:"Aufgeregt",        pron:"uz-BU-djen",    img:"🤩"},
+      {sr:"Umoran",      cyr:"Уморан",      de:"Müde",             pron:"u-MO-ran",      img:"😴"},
+      {sr:"Zbunjen",     cyr:"Збуњен",      de:"Verwirrt",         pron:"ZBU-njen",      img:"😕"},
+      {sr:"Ponosan",     cyr:"Понос",       de:"Stolz",            pron:"PO-nos",        img:"😤"},
+      {sr:"Stidljiv",    cyr:"Стидљив",     de:"Schüchtern",       pron:"STID-ljiv",     img:"😊"},
+      {sr:"Optimistican",cyr:"Оптимистичан",de:"Optimistisch",     pron:"op-ti-MIS-tik", img:"🌟"},
+      {sr:"Depresivan",  cyr:"Депресиван",  de:"Deprimiert",       pron:"de-pre-SI-van", img:"😔"},
+      {sr:"Mislim da...",cyr:"Мислим да...",de:"Ich denke, dass...",pron:"MIS-lim da",   img:"🤔"},
+      {sr:"Slažem se",   cyr:"Слажем се",   de:"Ich stimme zu",    pron:"SLA-zhem se",   img:"👍"},
+      {sr:"Ne slažem se",cyr:"Не слажем се",de:"Ich stimme nicht zu",pron:"ne SLA-zhem", img:"👎"},
+      {sr:"Sviđa mi se", cyr:"Свиђа ми се", de:"Ich mag es",       pron:"SVI-dja mi se", img:"❤️"},
+      {sr:"Ne sviđa mi se",cyr:"Не свиђа ми се",de:"Ich mag es nicht",pron:"ne SVI-dja", img:"💔"},
+    ],
+    sentences:[
+      {sr:"Osećam se sjajno danas.",     de:"Ich fühle mich heute großartig."},
+      {sr:"Mislim da je to pogrešno.",   de:"Ich denke, das ist falsch."},
+      {sr:"Slažem se s tobom.",          de:"Ich stimme dir zu."},
+    ]
+  },
+  // ── B1: NATUR & WETTER ───────────────────────────────────────────────────────
+  {
+    id:"b1_nature", level:"B1", title:"Natur & Wetter", emoji:"🌿", color:"#98D8C8",
+    words:[
+      {sr:"Sunce",        cyr:"Сунце",      de:"Sonne",            pron:"SUN-tse",       img:"☀️"},
+      {sr:"Kiša",         cyr:"Киша",       de:"Regen",            pron:"KI-sha",        img:"🌧️"},
+      {sr:"Sneg",         cyr:"Снег",       de:"Schnee",           pron:"sneg",          img:"❄️"},
+      {sr:"Vetar",        cyr:"Ветар",      de:"Wind",             pron:"VE-tar",        img:"💨"},
+      {sr:"Oblaci",       cyr:"Облаци",     de:"Wolken",           pron:"OB-la-tsi",     img:"☁️"},
+      {sr:"Grmljavina",   cyr:"Грмљавина",  de:"Gewitter",         pron:"grm-LJA-vi-na", img:"⛈️"},
+      {sr:"Reka",         cyr:"Река",       de:"Fluss",            pron:"RE-ka",         img:"🏞️"},
+      {sr:"More",         cyr:"Море",       de:"Meer",             pron:"MO-re",         img:"🌊"},
+      {sr:"Planina",      cyr:"Планина",    de:"Berg",             pron:"pla-NI-na",     img:"⛰️"},
+      {sr:"Šuma",         cyr:"Шума",       de:"Wald",             pron:"SHU-ma",        img:"🌲"},
+      {sr:"Pas",          cyr:"Пас",        de:"Hund",             pron:"pas",           img:"🐶"},
+      {sr:"Mačka",        cyr:"Мачка",      de:"Katze",            pron:"MACH-ka",       img:"🐱"},
+      {sr:"Ptica",        cyr:"Птица",      de:"Vogel",            pron:"PTI-tsa",       img:"🐦"},
+      {sr:"Konj",         cyr:"Коњ",        de:"Pferd",            pron:"konj",          img:"🐴"},
+    ],
+    sentences:[
+      {sr:"Kakvo je vreme danas?",       de:"Wie ist das Wetter heute?"},
+      {sr:"Pada kiša ceo dan.",          de:"Es regnet den ganzen Tag."},
+      {sr:"Volim planinarenje.",         de:"Ich liebe Wandern."},
+    ]
+  },
+  // ── B1: HÄUFIGE VERBEN 2 ─────────────────────────────────────────────────────
+  {
+    id:"b1_verbs2", level:"B1", title:"Alltagsverben", emoji:"🔄", color:"#DDA0DD",
+    words:[
+      {sr:"Raditi",      cyr:"Радити",      de:"Arbeiten",         pron:"RA-di-ti",      img:"💼"},
+      {sr:"Živeti",      cyr:"Живети",      de:"Leben / Wohnen",   pron:"ZHI-ve-ti",     img:"🏠"},
+      {sr:"Voleti",      cyr:"Волети",      de:"Lieben / Mögen",   pron:"VO-le-ti",      img:"❤️"},
+      {sr:"Učiti",       cyr:"Учити",       de:"Lernen",           pron:"U-tʃi-ti",      img:"📚"},
+      {sr:"Čitati",      cyr:"Читати",      de:"Lesen",            pron:"CHI-ta-ti",     img:"📖"},
+      {sr:"Pisati",      cyr:"Писати",      de:"Schreiben",        pron:"PI-sa-ti",      img:"✍️"},
+      {sr:"Slušati",     cyr:"Слушати",     de:"Hören / Zuhören",  pron:"SLU-sha-ti",    img:"👂"},
+      {sr:"Gledati",     cyr:"Гледати",     de:"Schauen / Ansehen",pron:"GLE-da-ti",     img:"👀"},
+      {sr:"Kupiti",      cyr:"Купити",      de:"Kaufen",           pron:"KU-pi-ti",      img:"🛍️"},
+      {sr:"Prodati",     cyr:"Продати",     de:"Verkaufen",        pron:"PRO-da-ti",     img:"🏷️"},
+      {sr:"Platiti",     cyr:"Платити",     de:"Bezahlen",         pron:"PLA-ti-ti",     img:"💳"},
+      {sr:"Otvoriti",    cyr:"Отворити",    de:"Öffnen",           pron:"ot-VO-ri-ti",   img:"🔓"},
+      {sr:"Zatvoriti",   cyr:"Затворити",   de:"Schließen",        pron:"za-tVO-ri-ti",  img:"🔒"},
+      {sr:"Pomoci",      cyr:"Помоћи",      de:"Helfen",           pron:"PO-mo-chi",     img:"🤝"},
+      {sr:"Pitati",      cyr:"Питати",      de:"Fragen",           pron:"PI-ta-ti",      img:"❓"},
+      {sr:"Odgovoriti",  cyr:"Одговорити",  de:"Antworten",        pron:"od-go-VO-ri-ti",img:"💬"},
+      {sr:"Misliti",     cyr:"Мислити",     de:"Denken",           pron:"MIS-li-ti",     img:"🤔"},
+      {sr:"Veriti",      cyr:"Веровати",    de:"Glauben",          pron:"VE-ro-va-ti",   img:"🙏"},
+      {sr:"Čekati",      cyr:"Чекати",      de:"Warten",           pron:"CHE-ka-ti",     img:"⏳"},
+      {sr:"Spavati",     cyr:"Спавати",     de:"Schlafen",         pron:"SPA-va-ti",     img:"😴"},
+      {sr:"Ustati",      cyr:"Устати",      de:"Aufstehen",        pron:"U-sta-ti",      img:"⬆️"},
+      {sr:"Sesti",       cyr:"Сести",       de:"Setzen (sich)",    pron:"SE-sti",        img:"🪑"},
+      {sr:"Trčati",      cyr:"Трчати",      de:"Laufen / Rennen",  pron:"TR-tʃa-ti",     img:"🏃"},
+      {sr:"Plivati",     cyr:"Пливати",     de:"Schwimmen",        pron:"PLI-va-ti",     img:"🏊"},
+      {sr:"Kuvati",      cyr:"Кувати",      de:"Kochen",           pron:"KU-va-ti",      img:"🍳"},
+      {sr:"Čistiti",     cyr:"Чистити",     de:"Putzen",           pron:"CHIS-ti-ti",    img:"🧹"},
+      {sr:"Pevati",      cyr:"Певати",      de:"Singen",           pron:"PE-va-ti",      img:"🎤"},
+      {sr:"Igrati",      cyr:"Играти",      de:"Spielen",          pron:"IG-ra-ti",      img:"🎮"},
+      {sr:"Smejati se",  cyr:"Смејати се",  de:"Lachen",           pron:"SME-ja-ti se",  img:"😂"},
+      {sr:"Plakati",     cyr:"Плакати",     de:"Weinen",           pron:"PLA-ka-ti",     img:"😢"},
+    ],
+    sentences:[
+      {sr:"Volim da čitam knjige.",      de:"Ich lese gerne Bücher."},
+      {sr:"Mogu li da ti pomognem?",     de:"Kann ich dir helfen?"},
+      {sr:"Čekam autobus.",              de:"Ich warte auf den Bus."},
+      {sr:"Ona zna da kuva.",            de:"Sie kann kochen."},
+      {sr:"Igram fudbal svake subote.",  de:"Ich spiele jeden Samstag Fußball."},
+    ]
+  },
+  // ── B1: SERBIEN & KULTUR ─────────────────────────────────────────────────────
+  {
+    id:"b1_serbia", level:"B1", title:"Serbien & Kultur", emoji:"🇷🇸", color:"#FF6B6B",
+    words:[
+      {sr:"Srbija",      cyr:"Србија",      de:"Serbien",          pron:"SR-bi-ja",      img:"🇷🇸"},
+      {sr:"Beograd",     cyr:"Београд",     de:"Belgrad",          pron:"BE-o-grad",     img:"🏙️"},
+      {sr:"Novi Sad",    cyr:"Нови Сад",    de:"Novi Sad",         pron:"NO-vi sad",     img:"🌆"},
+      {sr:"Niš",         cyr:"Ниш",         de:"Niš",              pron:"nish",          img:"🏛️"},
+      {sr:"Srpski",      cyr:"Српски",      de:"Serbisch",         pron:"SRP-ski",       img:"🗣️"},
+      {sr:"Ćirilica",    cyr:"Ћирилица",    de:"Kyrillisch",       pron:"tʃi-RI-li-tsa", img:"🔡"},
+      {sr:"Latinica",    cyr:"Латиница",    de:"Lateinisch",       pron:"la-TI-ni-tsa",  img:"🔤"},
+      {sr:"Pevati",      cyr:"Певати",      de:"Singen",           pron:"PE-va-ti",      img:"🎵"},
+      {sr:"Slava",       cyr:"Слава",       de:"Familienpatron (Feier)", pron:"SLA-va",  img:"🕯️"},
+      {sr:"Krsna slava", cyr:"Крсна слава", de:"Hauspatron (Kirchenfest)", pron:"KRS-na SLA-va", img:"⛪"},
+      {sr:"Rakija",      cyr:"Ракија",      de:"Schnaps (Obstbrand)", pron:"RA-ki-ja",   img:"🥃"},
+      {sr:"Šljivovica",  cyr:"Шљивовица",   de:"Pflaumenschnaps",  pron:"SHLI-vo-vi-tsa",img:"🍶"},
+      {sr:"Ćevapi",      cyr:"Ћевапи",      de:"Ćevapčići",        pron:"CHE-va-pi",     img:"🍖"},
+      {sr:"Burek",       cyr:"Бурек",       de:"Burek (Gebäck)",   pron:"BU-rek",        img:"🥐"},
+      {sr:"Kajmak",      cyr:"Кајмак",      de:"Kajmak (Rahm)",    pron:"KAJ-mak",       img:"🧀"},
+      {sr:"Muzika",      cyr:"Музика",      de:"Musik",            pron:"MU-zi-ka",      img:"🎵"},
+      {sr:"Turbo folk",  cyr:"Турбо фолк",  de:"Turbofolk (Musikstil)", pron:"TUR-bo folk", img:"🎶"},
+      {sr:"Fudbal",      cyr:"Фудбал",      de:"Fußball",          pron:"FUD-bal",       img:"⚽"},
+      {sr:"Košarka",     cyr:"Кошарка",     de:"Basketball",       pron:"KO-shar-ka",    img:"🏀"},
+      {sr:"Plaža",       cyr:"Плажа",       de:"Strand",           pron:"PLA-zha",       img:"🏖️"},
+    ],
+    sentences:[
+      {sr:"Srbija je lepa zemlja.",      de:"Serbien ist ein schönes Land."},
+      {sr:"Beograd je glavni grad.",     de:"Belgrad ist die Hauptstadt."},
+      {sr:"Volim ćevape.",               de:"Ich liebe Ćevapčići."},
+      {sr:"Govorim srpski.",             de:"Ich spreche Serbisch."},
+      {sr:"Ćirilica nije teška.",        de:"Die Kyrillica ist nicht schwer."},
+    ]
+  },
+];
+
+// ─── HELPER ───────────────────────────────────────────────────────────────────
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+function randFrom(arr, n) { return shuffle(arr).slice(0, n); }
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [prog, setProg] = useState(() => load() || defState());
+  const [view, setView] = useState("home"); // home | unit | flash | quiz | img | sentence | stats | alphabet
+  const [unit, setUnit] = useState(null);
+  const [cardI, setCardI] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [quizQ, setQuizQ] = useState(null);
+  const [imgQ, setImgQ] = useState(null);
+  const [sentQ, setSentQ] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [filter, setFilter] = useState("all"); // all | A1 | A2 | B1
+  const [learnDir, setLearnDir] = useState("sr2de"); // sr2de | de2sr
+
+  useEffect(() => { save(prog); }, [prog]);
+
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (prog.lastDate !== today) {
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      const streak = prog.lastDate === y.toDateString() ? prog.streak + 1 : 1;
+      setProg(p => ({ ...p, streak, lastDate: today }));
+    }
+  }, []);
+
+  const showToast = (msg, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  const addXP = useCallback((n, msg) => {
+    setProg(p => ({ ...p, xp: p.xp + n }));
+    if (msg) showToast(msg);
+  }, []);
+
+  // masteredCount for a unit
+  const mastCount = (uid) => {
+    const m = prog.mastered[uid];
+    return m ? Object.keys(m).length : 0;
+  };
+
+  // xp level label
+  const xpLabel = prog.xp < 300 ? "A1" : prog.xp < 1000 ? "A2" : "B1";
+  const xpPrev = prog.xp < 300 ? 0 : prog.xp < 1000 ? 300 : 1000;
+  const xpNext = prog.xp < 300 ? 300 : prog.xp < 1000 ? 1000 : 5000;
+  const xpPct = Math.min(100, Math.round(((prog.xp - xpPrev) / (xpNext - xpPrev)) * 100));
+
+  // total stats
+  const totalWords = ALL_UNITS.reduce((a, u) => a + u.words.length, 0);
+  const totalMastered = ALL_UNITS.reduce((a, u) => a + mastCount(u.id), 0);
+
+  // ── FLASHCARD LOGIC ──────────────────────────────────────────────────────
+  const markCard = (diff) => {
+    const w = unit.words[cardI];
+    if (diff !== "hard") {
+      setProg(p => {
+        const m = { ...(p.mastered[unit.id] || {}) };
+        m[cardI] = diff;
+        return { ...p, xp: p.xp + (diff === "easy" ? 8 : 4), mastered: { ...p.mastered, [unit.id]: m } };
+      });
+    }
+    const next = cardI + 1;
+    if (next >= unit.words.length) {
+      showToast("Alle Karten durch! 🎉");
+      setView("unit");
+    } else { setCardI(next); setFlipped(false); }
+  };
+
+  // ── QUIZ LOGIC ───────────────────────────────────────────────────────────
+  const makeQuiz = (u, dir) => {
+    const d = dir || learnDir;
+    const all = ALL_UNITS.flatMap(x => x.words);
+    const words = shuffle(u.words).slice(0, Math.min(12, u.words.length));
+    const q = words[0];
+    const wrong = shuffle(all.filter(w => w.de !== q.de)).slice(0, 3);
+    const opts = shuffle([q, ...wrong]);
+    setQuizQ({ words, idx: 0, score: 0, answered: null, correct: null, opts, current: q, dir: d });
+  };
+
+  const answerQuiz = (w) => {
+    if (quizQ.answered) return;
+    const ok = w.de === quizQ.current.de;
+    if (ok) addXP(12, "+12 XP ✓");
+    setQuizQ(q => ({ ...q, answered: w, correct: ok, score: ok ? q.score + 1 : q.score }));
+    setTimeout(() => {
+      const ni = quizQ.idx + 1;
+      if (ni >= quizQ.words.length) {
+        setQuizQ(q => ({ ...q, done: true }));
+      } else {
+        const all = ALL_UNITS.flatMap(x => x.words);
+        const nq = quizQ.words[ni];
+        const wrong = shuffle(all.filter(w => w.de !== nq.de)).slice(0, 3);
+        setQuizQ(q => ({ ...q, idx: ni, answered: null, correct: null, current: nq, opts: shuffle([nq, ...wrong]) }));
+      }
+    }, 900);
+  };
+
+  // ── IMAGE QUIZ ───────────────────────────────────────────────────────────
+  const makeImgQuiz = (u, dir) => {
+    const d = dir || learnDir;
+    const all = ALL_UNITS.flatMap(x => x.words);
+    const pool = shuffle(u.words.filter(w => w.img)).slice(0, Math.min(10, u.words.length));
+    const current = pool[0];
+    const wrong = shuffle(all.filter(w => w.de !== current.de)).slice(0, 3);
+    const opts = shuffle([current, ...wrong]);
+    setImgQ({ pool, idx: 0, score: 0, answered: null, current, opts, done: false, dir: d });
+  };
+
+  const answerImg = (w) => {
+    if (imgQ.answered) return;
+    const ok = w.de === imgQ.current.de;
+    if (ok) addXP(15, "+15 XP 🖼️");
+    setImgQ(q => ({ ...q, answered: w, correct: ok, score: ok ? q.score + 1 : q.score }));
+    setTimeout(() => {
+      const ni = imgQ.idx + 1;
+      if (ni >= imgQ.pool.length) {
+        setImgQ(q => ({ ...q, done: true }));
+      } else {
+        const all = ALL_UNITS.flatMap(x => x.words);
+        const nc = imgQ.pool[ni];
+        const wrong = shuffle(all.filter(w => w.de !== nc.de)).slice(0, 3);
+        setImgQ(q => ({ ...q, idx: ni, answered: null, correct: null, current: nc, opts: shuffle([nc, ...wrong]) }));
+      }
+    }, 900);
+  };
+
+  // ── SENTENCE BUILDER ─────────────────────────────────────────────────────
+  const makeSentQ = (u, dir) => {
+    const d = dir || learnDir;
+    const sents = u.sentences || [];
+    if (!sents.length) { showToast("Keine Sätze für diese Unit", false); return; }
+    const s = sents[Math.floor(Math.random() * sents.length)];
+    // sr2de: show SR sentence, build DE answer
+    // de2sr: show DE sentence, build SR answer (existing behaviour)
+    const buildLang = d === "sr2de" ? "de" : "sr";
+    const parts = s[buildLang].split(" ");
+    const scrambled = shuffle(parts);
+    setSentQ({ sents, current: s, parts, scrambled, chosen: [], done: false, correct: false, dir: d, buildLang });
+  };
+
+  const pickWord = (i) => {
+    if (sentQ.done) return;
+    const word = sentQ.scrambled[i];
+    const newChosen = [...sentQ.chosen, { word, idx: i }];
+    const newScrambled = sentQ.scrambled.map((w, j) => j === i ? null : w);
+    const full = newChosen.map(c => c.word).join(" ");
+    const isDone = newChosen.length === sentQ.parts.length;
+    const isCorrect = isDone && full === sentQ.current[sentQ.buildLang];
+    if (isDone) {
+      if (isCorrect) addXP(20, "+20 XP 🏆");
+      setSentQ(q => ({ ...q, chosen: newChosen, scrambled: newScrambled, done: true, correct: isCorrect }));
+    } else {
+      setSentQ(q => ({ ...q, chosen: newChosen, scrambled: newScrambled }));
+    }
+  };
+
+  const removeWord = (i) => {
+    if (sentQ.done) return;
+    const removed = sentQ.chosen[i];
+    const newChosen = sentQ.chosen.filter((_, j) => j !== i);
+    const newScrambled = [...sentQ.scrambled];
+    newScrambled[removed.idx] = removed.word;
+    setSentQ(q => ({ ...q, chosen: newChosen, scrambled: newScrambled }));
+  };
+
+  const nextSent = () => {
+    const { sents, dir, buildLang } = sentQ;
+    const s = sents[Math.floor(Math.random() * sents.length)];
+    const parts = s[buildLang].split(" ");
+    setSentQ({ sents, current: s, parts, scrambled: shuffle(parts), chosen: [], done: false, correct: false, dir, buildLang });
+  };
+
+  const lv = ["A1", "A2", "B1"];
+  const LEVEL_C = { A1: "#FF6B6B", A2: "#4ECDC4", B1: "#A78BFA" };
+  const filteredUnits = filter === "all" ? ALL_UNITS : ALL_UNITS.filter(u => u.level === filter);
+
+  // ─────────────────────────────── RENDER ──────────────────────────────────
+  return (
+    <div style={S.root}>
+      {toast && <div style={{ ...S.toast, background: toast.ok ? "#22c55e" : "#ef4444" }}>{toast.msg}</div>}
+
+      {/* ══ HOME ═══════════════════════════════════════════════════════════ */}
+      {view === "home" && (
+        <div style={S.page}>
+          <div style={S.hdr}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div>
+                <div style={S.appTitle}>🇷🇸 Serbisch</div>
+                <div style={S.levelTag}>{xpLabel} · {prog.xp} XP</div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ background: "#fff7ed", color: "#ea580c", padding: "6px 12px", borderRadius: 20, fontWeight: 700, fontSize: 13 }}>🔥 {prog.streak}</div>
+                <div style={{ background: "#e0e7ff", color: "#4338ca", padding: "6px 12px", borderRadius: 20, fontWeight: 700, fontSize: 13 }}>{totalMastered}/{totalWords}</div>
+              </div>
+            </div>
+            <div style={S.xpBg}><div style={{ ...S.xpFill, width: xpPct + "%" }} /></div>
+            <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "right", marginTop: 3 }}>
+              {prog.xp} / {xpNext} XP → {xpLabel === "B1" ? "B1 ✓" : lv[lv.indexOf(xpLabel) + 1]}
+            </div>
+          </div>
+
+          {/* Filter tabs */}
+          <div style={S.filterRow}>
+            {["all", "A1", "A2", "B1"].map(f => (
+              <button key={f} style={{ ...S.filterBtn, background: filter === f ? "#6366f1" : "#f1f5f9", color: filter === f ? "#fff" : "#475569" }}
+                onClick={() => setFilter(f)}>{f === "all" ? "Alle" : f}</button>
+            ))}
+          </div>
+
+          <div style={S.scroll}>
+            {lv.filter(l => filter === "all" || filter === l).map(lv => (
+              <div key={lv} style={{ marginBottom: 24 }}>
+                <div style={{ fontWeight: 800, fontSize: 12, color: LEVEL_C[lv], letterSpacing: 1, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: LEVEL_C[lv], display: "inline-block" }} />
+                  Niveau {lv}
+                </div>
+                {filteredUnits.filter(u => u.level === lv).map(u => {
+                  const mc = mastCount(u.id);
+                  const pct = Math.round((mc / u.words.length) * 100);
+                  return (
+                    <div key={u.id} style={{ ...S.unitCard, borderLeft: `4px solid ${u.color}` }}
+                      onClick={() => { setUnit(u); setView("unit"); }}>
+                      <span style={{ fontSize: 30 }}>{u.emoji}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: "#1e293b" }}>{u.title}</div>
+                        <div style={{ fontSize: 12, color: "#94a3b8" }}>{u.words.length} Wörter · {u.sentences?.length || 0} Sätze</div>
+                        <div style={S.barBg}><div style={{ ...S.barFill, width: pct + "%", background: pct === 100 ? "#22c55e" : u.color }} /></div>
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: pct === 100 ? "#22c55e" : u.color, minWidth: 36, textAlign: "right" }}>
+                        {pct === 100 ? "✓" : pct + "%"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            <div style={{ height: 90 }} />
+          </div>
+
+          <div style={S.nav}>
+            {[["📚", "Lernen", () => {}], ["🔤", "Alphabet", () => setView("alphabet")], ["📊", "Stats", () => setView("stats")]].map(([ic, lb, fn]) => (
+              <button key={lb} style={S.navBtn} onClick={fn}>
+                <div style={{ fontSize: 22 }}>{ic}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>{lb}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══ UNIT DETAIL ════════════════════════════════════════════════════ */}
+      {view === "unit" && unit && (
+        <div style={S.page}>
+          <div style={{ ...S.hero, background: unit.color }}>
+            <button style={S.backBtnW} onClick={() => setView("home")}>‹</button>
+            <div style={{ fontSize: 56, marginBottom: 6 }}>{unit.emoji}</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: "#fff" }}>{unit.title}</div>
+            <div style={{ background: "rgba(255,255,255,0.25)", borderRadius: 20, padding: "4px 14px", fontSize: 13, color: "#fff", marginTop: 6 }}>
+              {unit.level} · {unit.words.length} Wörter · {unit.sentences?.length || 0} Sätze
+            </div>
+          </div>
+
+          <div style={S.scroll}>
+            {/* Direction Toggle */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 12, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>LERNRICHTUNG</div>
+              <div style={{ display: "flex", background: "#f1f5f9", borderRadius: 14, padding: 4, gap: 4 }}>
+                <button onClick={() => setLearnDir("sr2de")} style={{ flex: 1, border: "none", borderRadius: 10, padding: "10px 8px", fontWeight: 700, fontSize: 13, cursor: "pointer", background: learnDir === "sr2de" ? "#fff" : "transparent", color: learnDir === "sr2de" ? unit.color : "#64748b", boxShadow: learnDir === "sr2de" ? "0 1px 6px rgba(0,0,0,0.10)" : "none", transition: "all 0.2s" }}>
+                  🇷🇸 Serbisch → 🇩🇪 Deutsch
+                </button>
+                <button onClick={() => setLearnDir("de2sr")} style={{ flex: 1, border: "none", borderRadius: 10, padding: "10px 8px", fontWeight: 700, fontSize: 13, cursor: "pointer", background: learnDir === "de2sr" ? "#fff" : "transparent", color: learnDir === "de2sr" ? unit.color : "#64748b", boxShadow: learnDir === "de2sr" ? "0 1px 6px rgba(0,0,0,0.10)" : "none", transition: "all 0.2s" }}>
+                  🇩🇪 Deutsch → 🇷🇸 Serbisch
+                </button>
+              </div>
+            </div>
+
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#64748b", marginBottom: 12 }}>ÜBUNGSMODI</div>
+            <div style={S.modeGrid}>
+              {[
+                { icon: "🃏", label: "Karteikarten", fn: () => { setCardI(0); setFlipped(false); setView("flash"); } },
+                { icon: "✅", label: "Quiz",         fn: () => { makeQuiz(unit, learnDir); setView("quiz"); } },
+                { icon: "🖼️", label: "Bilder-Quiz",  fn: () => { makeImgQuiz(unit, learnDir); setView("img"); } },
+                { icon: "🔀", label: "Satz bauen",   fn: () => { makeSentQ(unit, learnDir); setView("sentence"); } },
+              ].map(m => (
+                <button key={m.label} style={{ ...S.modeBtn, borderColor: unit.color }} onClick={m.fn}>
+                  <span style={{ fontSize: 30 }}>{m.icon}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>{m.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#64748b", marginTop: 20, marginBottom: 10 }}>WORTLISTE</div>
+            {unit.words.map((w, i) => {
+              const m = prog.mastered[unit.id]?.[i];
+              return (
+                <div key={i} style={S.wordRow}>
+                  <span style={{ ...S.dot, background: m === "easy" ? "#22c55e" : m ? unit.color : "#e2e8f0" }} />
+                  <span style={{ fontSize: 20, width: 30 }}>{w.img}</span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#1e293b" }}>{w.sr}</span>
+                    <span style={{ color: "#94a3b8", fontSize: 12 }}> · {w.cyr}</span>
+                  </div>
+                  <span style={{ color: "#6366f1", fontWeight: 600, fontSize: 13 }}>{w.de}</span>
+                </div>
+              );
+            })}
+
+            {unit.sentences?.length > 0 && (
+              <>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "#64748b", marginTop: 20, marginBottom: 10 }}>BEISPIELSÄTZE</div>
+                {unit.sentences.map((s, i) => (
+                  <div key={i} style={S.sentBox}>
+                    <div style={{ fontWeight: 700, color: "#1e293b", fontSize: 14 }}>{s.sr}</div>
+                    <div style={{ color: "#64748b", fontSize: 13, marginTop: 3, fontStyle: "italic" }}>{s.de}</div>
+                  </div>
+                ))}
+              </>
+            )}
+            <div style={{ height: 40 }} />
+          </div>
+        </div>
+      )}
+
+      {/* ══ FLASHCARDS ══════════════════════════════════════════════════════ */}
+      {view === "flash" && unit && (
+        <div style={S.page}>
+          <div style={S.topBar}>
+            <button style={S.backBtn} onClick={() => setView("unit")}>‹ Zurück</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <span style={S.prog}>{cardI + 1} / {unit.words.length}</span>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{learnDir === "sr2de" ? "🇷🇸 → 🇩🇪" : "🇩🇪 → 🇷🇸"}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "10px 16px", flexWrap: "wrap" }}>
+            {unit.words.map((_, i) => (
+              <div key={i} style={{ width: i === cardI ? 12 : 8, height: i === cardI ? 12 : 8, borderRadius: "50%", background: i < cardI ? "#22c55e" : i === cardI ? unit.color : "#e2e8f0", transition: "all 0.3s" }} />
+            ))}
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "10px 20px" }}>
+            <div onClick={() => setFlipped(f => !f)}
+              style={{ width: "100%", minHeight: 260, borderRadius: 28, background: flipped ? "#1e293b" : unit.color, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 40px rgba(0,0,0,0.15)", padding: 28, transition: "background 0.35s" }}>
+              {!flipped ? (
+                learnDir === "sr2de" ? (
+                  <>
+                    <div style={{ fontSize: 56, marginBottom: 8 }}>{unit.words[cardI].img}</div>
+                    <div style={{ fontSize: 38, fontWeight: 900, color: "#fff", marginBottom: 6, textAlign: "center" }}>{unit.words[cardI].cyr}</div>
+                    <div style={{ fontSize: 20, color: "rgba(255,255,255,0.85)", marginBottom: 4 }}>{unit.words[cardI].sr}</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", fontStyle: "italic" }}>[{unit.words[cardI].pron}]</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 20 }}>👆 Tippe zum Umdrehen</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 56, marginBottom: 8 }}>{unit.words[cardI].img}</div>
+                    <div style={{ fontSize: 34, fontWeight: 900, color: "#fff", marginBottom: 6, textAlign: "center" }}>{unit.words[cardI].de}</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 20 }}>👆 Tippe zum Umdrehen</div>
+                  </>
+                )
+              ) : (
+                learnDir === "sr2de" ? (
+                  <>
+                    <div style={{ fontSize: 40, fontWeight: 900, color: "#fff", textAlign: "center" }}>{unit.words[cardI].de}</div>
+                    <div style={{ fontSize: 18, color: "rgba(255,255,255,0.7)", marginTop: 10 }}>{unit.words[cardI].sr}</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 38, fontWeight: 900, color: "#fff", marginBottom: 6, textAlign: "center" }}>{unit.words[cardI].cyr}</div>
+                    <div style={{ fontSize: 20, color: "rgba(255,255,255,0.8)", marginBottom: 4 }}>{unit.words[cardI].sr}</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>[{unit.words[cardI].pron}]</div>
+                  </>
+                )
+              )}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10, padding: "16px 20px 30px" }}>
+            {[["hard", "😣 Schwer", "#fee2e2", "#ef4444"], ["ok", "🤔 OK", "#fef9c3", "#ca8a04"], ["easy", "😄 Leicht", "#dcfce7", "#16a34a"]].map(([d, l, bg, c]) => (
+              <button key={d} style={{ flex: 1, background: bg, color: c, border: "none", borderRadius: 16, padding: "14px 6px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                onClick={() => markCard(d)}>{l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══ QUIZ ════════════════════════════════════════════════════════════ */}
+      {view === "quiz" && unit && quizQ && (
+        <div style={S.page}>
+          <div style={S.topBar}>
+            <button style={S.backBtn} onClick={() => { setView("unit"); setQuizQ(null); }}>‹ Zurück</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <span style={S.prog}>{quizQ.idx + 1}/{quizQ.words.length}</span>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{quizQ.dir === "sr2de" ? "🇷🇸 → 🇩🇪" : "🇩🇪 → 🇷🇸"}</span>
+            </div>
+          </div>
+          {quizQ.done ? (
+            <div style={S.donePage}>
+              <div style={{ fontSize: 80 }}>{quizQ.score >= quizQ.words.length * 0.8 ? "🏆" : "💪"}</div>
+              <div style={{ fontSize: 44, fontWeight: 900, color: "#1e293b" }}>{quizQ.score}/{quizQ.words.length}</div>
+              <div style={{ color: "#64748b", fontSize: 18, margin: "8px 0 28px" }}>
+                {quizQ.score >= quizQ.words.length * 0.8 ? "Ausgezeichnet!" : "Weiter üben!"}
+              </div>
+              <button style={{ ...S.bigBtn, background: unit.color }} onClick={() => makeQuiz(unit, quizQ.dir)}>🔄 Nochmal</button>
+              <button style={{ ...S.bigBtn, background: "#64748b", marginTop: 10 }} onClick={() => { setView("unit"); setQuizQ(null); }}>← Zurück</button>
+            </div>
+          ) : (
+            <div style={{ flex: 1, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
+              <div style={{ background: "#fff", borderRadius: 22, padding: 24, border: `2px solid ${unit.color}`, textAlign: "center" }}>
+                <div style={{ fontSize: 44, marginBottom: 8 }}>{quizQ.current.img}</div>
+                {quizQ.dir === "sr2de" ? (
+                  <>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: "#1e293b" }}>{quizQ.current.cyr}</div>
+                    <div style={{ fontSize: 16, color: "#475569", marginTop: 4 }}>{quizQ.current.sr}</div>
+                    <div style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic" }}>[{quizQ.current.pron}]</div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 28, fontWeight: 900, color: "#1e293b" }}>{quizQ.current.de}</div>
+                )}
+              </div>
+              <div style={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>
+                {quizQ.dir === "sr2de" ? "Was bedeutet das auf Deutsch?" : "Wie sagt man das auf Serbisch (Kyrillisch)?"}
+              </div>
+              {quizQ.opts.map((opt, i) => {
+                const isCorrect = opt.de === quizQ.current.de;
+                const isSelected = quizQ.answered?.de === opt.de;
+                let bg = "#f8fafc", bc = "#e2e8f0", col = "#1e293b";
+                if (quizQ.answered) {
+                  if (isCorrect) { bg = "#dcfce7"; bc = "#22c55e"; col = "#166534"; }
+                  else if (isSelected) { bg = "#fee2e2"; bc = "#ef4444"; col = "#991b1b"; }
+                }
+                return (
+                  <button key={i} style={{ background: bg, border: `2px solid ${bc}`, color: col, borderRadius: 16, padding: "16px 18px", fontSize: 15, fontWeight: 600, textAlign: "left", cursor: "pointer", transition: "all 0.15s" }}
+                    onClick={() => answerQuiz(opt)}>
+                    {quizQ.answered && isCorrect ? "✓ " : quizQ.answered && isSelected ? "✗ " : ""}
+                    {quizQ.dir === "sr2de" ? opt.de : `${opt.cyr} (${opt.sr})`}
+                  </button>
+                );
+              })}
+              <div style={{ textAlign: "center", color: "#94a3b8", fontSize: 13 }}>⭐ {quizQ.score} Punkte</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══ BILD-QUIZ ═══════════════════════════════════════════════════════ */}
+      {view === "img" && unit && imgQ && (
+        <div style={S.page}>
+          <div style={S.topBar}>
+            <button style={S.backBtn} onClick={() => { setView("unit"); setImgQ(null); }}>‹ Zurück</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <span style={S.prog}>{imgQ.idx + 1}/{imgQ.pool.length}</span>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{imgQ.dir === "sr2de" ? "🇷🇸 → 🇩🇪" : "🇩🇪 → 🇷🇸"}</span>
+            </div>
+          </div>
+          {imgQ.done ? (
+            <div style={S.donePage}>
+              <div style={{ fontSize: 80 }}>🖼️</div>
+              <div style={{ fontSize: 44, fontWeight: 900, color: "#1e293b" }}>{imgQ.score}/{imgQ.pool.length}</div>
+              <div style={{ color: "#64748b", fontSize: 18, margin: "8px 0 28px" }}>Bilder-Quiz fertig!</div>
+              <button style={{ ...S.bigBtn, background: unit.color }} onClick={() => makeImgQuiz(unit, imgQ.dir)}>🔄 Nochmal</button>
+              <button style={{ ...S.bigBtn, background: "#64748b", marginTop: 10 }} onClick={() => { setView("unit"); setImgQ(null); }}>← Zurück</button>
+            </div>
+          ) : (
+            <div style={{ flex: 1, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Big emoji card */}
+              <div style={{ background: `${unit.color}22`, borderRadius: 28, padding: "40px 20px", textAlign: "center", border: `3px solid ${unit.color}` }}>
+                <div style={{ fontSize: 88 }}>{imgQ.current.img}</div>
+                <div style={{ fontSize: 13, color: unit.color, fontWeight: 700, marginTop: 12 }}>
+                  {imgQ.dir === "sr2de" ? "Was bedeutet das auf Deutsch?" : "Wie heißt das auf Serbisch?"}
+                </div>
+              </div>
+              {imgQ.opts.map((opt, i) => {
+                const isCorrect = opt.de === imgQ.current.de;
+                const isSel = imgQ.answered?.de === opt.de;
+                let bg = "#f8fafc", bc = "#e2e8f0", col = "#1e293b";
+                if (imgQ.answered) {
+                  if (isCorrect) { bg = "#dcfce7"; bc = "#22c55e"; col = "#166534"; }
+                  else if (isSel) { bg = "#fee2e2"; bc = "#ef4444"; col = "#991b1b"; }
+                }
+                return (
+                  <button key={i} style={{ background: bg, border: `2px solid ${bc}`, color: col, borderRadius: 16, padding: "18px", fontSize: 15, fontWeight: 600, textAlign: "center", cursor: "pointer" }}
+                    onClick={() => answerImg(opt)}>
+                    {imgQ.answered && isCorrect ? "✓ " : imgQ.answered && isSel ? "✗ " : ""}
+                    {imgQ.dir === "sr2de" ? opt.de : `${opt.cyr} (${opt.sr})`}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══ SATZ BAUEN ══════════════════════════════════════════════════════ */}
+      {view === "sentence" && unit && sentQ && (
+        <div style={S.page}>
+          <div style={S.topBar}>
+            <button style={S.backBtn} onClick={() => setView("unit")}>‹ Zurück</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <span style={S.prog}>Satz bauen 🔀</span>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{sentQ.dir === "sr2de" ? "🇷🇸 → 🇩🇪" : "🇩🇪 → 🇷🇸"}</span>
+            </div>
+          </div>
+          <div style={{ flex: 1, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Prompt sentence */}
+            <div style={{ background: "#f1f5f9", borderRadius: 18, padding: "20px", textAlign: "center", border: "2px solid #e2e8f0" }}>
+              <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                {sentQ.dir === "sr2de" ? "Übersetze ins Deutsche:" : "Übersetze ins Serbische:"}
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#1e293b" }}>
+                {sentQ.dir === "sr2de" ? sentQ.current.sr : sentQ.current.de}
+              </div>
+              {sentQ.dir === "sr2de" && (
+                <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 4 }}>{sentQ.current.de.replace(/./g, "·")}</div>
+              )}
+            </div>
+
+            {/* Answer area */}
+            <div style={{ minHeight: 60, background: "#fff", borderRadius: 18, border: `2px dashed ${sentQ.done ? (sentQ.correct ? "#22c55e" : "#ef4444") : unit.color}`, padding: "14px 14px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              {sentQ.chosen.length === 0 && <span style={{ color: "#cbd5e1", fontSize: 14 }}>Tippe auf Wörter unten...</span>}
+              {sentQ.chosen.map((c, i) => (
+                <button key={i} style={{ background: unit.color, color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                  onClick={() => removeWord(i)}>{c.word}</button>
+              ))}
+            </div>
+
+            {sentQ.done && (
+              <div style={{ background: sentQ.correct ? "#dcfce7" : "#fee2e2", borderRadius: 14, padding: "14px 18px", textAlign: "center" }}>
+                <div style={{ fontWeight: 700, fontSize: 16, color: sentQ.correct ? "#166534" : "#991b1b" }}>
+                  {sentQ.correct ? "✓ Richtig! +20 XP" : "✗ Falsch"}
+                </div>
+                {!sentQ.correct && (
+                  <div style={{ color: "#ef4444", fontSize: 13, marginTop: 4 }}>
+                    Richtig: {sentQ.current[sentQ.buildLang]}
+                  </div>
+                )}
+                <button style={{ marginTop: 12, background: unit.color, color: "#fff", border: "none", borderRadius: 14, padding: "12px 28px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+                  onClick={nextSent}>Nächster Satz →</button>
+              </div>
+            )}
+
+            {/* Word bank */}
+            {!sentQ.done && (
+              <div style={{ background: "#f8fafc", borderRadius: 18, padding: "16px", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Wörter</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {sentQ.scrambled.map((w, i) => w && (
+                    <button key={i} style={{ background: "#fff", color: "#334155", border: "2px solid #e2e8f0", borderRadius: 10, padding: "8px 14px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                      onClick={() => pickWord(i)}>{w}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ══ ALPHABET ════════════════════════════════════════════════════════ */}
+      {view === "alphabet" && (
+        <div style={S.page}>
+          <div style={S.topBar}>
+            <button style={S.backBtn} onClick={() => setView("home")}>‹ Zurück</button>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>Serbisches Alphabet</span>
+          </div>
+          <div style={S.scroll}>
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#6366f1", marginBottom: 12 }}>
+              Kyrillisch ↔ Lateinisch · Jeder Buchstabe = 1 Laut!
+            </div>
+            {[
+              ["А","A","a"],["Б","B","b"],["В","V","v"],["Г","G","g"],["Д","D","d"],
+              ["Ђ","Đ","dj"],["Е","E","e"],["Ж","Ž","ž"],["З","Z","z"],["И","I","i"],
+              ["Ј","J","j"],["К","K","k"],["Л","L","l"],["Љ","Lj","lj"],["М","M","m"],
+              ["Н","N","n"],["Њ","Nj","nj"],["О","O","o"],["П","P","p"],["Р","R","r"],
+              ["С","S","s"],["Т","T","t"],["Ћ","Ć","tʃ(wch)"],["У","U","u"],["Ф","F","f"],
+              ["Х","H","h"],["Ц","C","ts"],["Ч","Č","tʃ"],["Џ","Dž","dʒ"],["Ш","Š","ʃ"]
+            ].map(([cyr, lat, snd]) => (
+              <div key={cyr} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ width: 46, height: 46, borderRadius: 12, background: "linear-gradient(135deg,#6366f1,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 900, color: "#fff", flexShrink: 0 }}>{cyr}</div>
+                <div style={{ width: 36, fontWeight: 700, fontSize: 18, color: "#334155" }}>{lat}</div>
+                <div style={{ flex: 1, fontSize: 13, color: "#64748b", fontStyle: "italic" }}>Aussprache: [{snd}]</div>
+              </div>
+            ))}
+            <div style={{ height: 40 }} />
+          </div>
+        </div>
+      )}
+
+      {/* ══ STATS ═══════════════════════════════════════════════════════════ */}
+      {view === "stats" && (
+        <div style={S.page}>
+          <div style={S.topBar}>
+            <button style={S.backBtn} onClick={() => setView("home")}>‹ Zurück</button>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>Dein Fortschritt</span>
+          </div>
+          <div style={S.scroll}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+              {[
+                ["🔥", prog.streak, "Tage-Serie", "#fef3c7"],
+                ["⭐", prog.xp, "XP gesamt", "#e0e7ff"],
+                ["✅", totalMastered, "Wörter gemeistert", "#dcfce7"],
+                ["📚", ALL_UNITS.filter(u => mastCount(u.id) === u.words.length).length + "/" + ALL_UNITS.length, "Units fertig", "#fce7f3"],
+              ].map(([ic, v, l, bg]) => (
+                <div key={l} style={{ background: bg, borderRadius: 18, padding: 16, textAlign: "center" }}>
+                  <div style={{ fontSize: 30, marginBottom: 4 }}>{ic}</div>
+                  <div style={{ fontSize: 26, fontWeight: 900, color: "#1e293b" }}>{v}</div>
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#94a3b8", marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>Fortschritt pro Unit</div>
+            {ALL_UNITS.map(u => {
+              const mc = mastCount(u.id);
+              const pct = Math.round((mc / u.words.length) * 100);
+              return (
+                <div key={u.id} style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                    <span>{u.emoji} {u.title} <span style={{ color: "#94a3b8", fontSize: 11 }}>({u.level})</span></span>
+                    <span style={{ fontWeight: 700, color: pct === 100 ? "#22c55e" : u.color }}>{mc}/{u.words.length}</span>
+                  </div>
+                  <div style={{ ...S.barBg, height: 8 }}><div style={{ ...S.barFill, width: pct + "%", background: pct === 100 ? "#22c55e" : u.color }} /></div>
+                </div>
+              );
+            })}
+            <div style={{ marginTop: 24, textAlign: "center" }}>
+              <button style={{ background: "#fee2e2", color: "#ef4444", border: "none", borderRadius: 14, padding: "12px 28px", fontWeight: 700, cursor: "pointer" }}
+                onClick={() => { if (window.confirm("Wirklich alle Daten löschen?")) { setProg(defState()); showToast("Zurückgesetzt", false); } }}>
+                🗑️ Fortschritt löschen
+              </button>
+            </div>
+            <div style={{ height: 40 }} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── STYLES ───────────────────────────────────────────────────────────────────
+const S = {
+  root: { fontFamily: "'Nunito','Segoe UI',sans-serif", background: "#f8fafc", minHeight: "100vh", maxWidth: 440, margin: "0 auto" },
+  page: { display: "flex", flexDirection: "column", minHeight: "100vh" },
+  toast: { position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", color: "#fff", fontWeight: 800, fontSize: 15, padding: "10px 24px", borderRadius: 30, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.25)", whiteSpace: "nowrap" },
+  hdr: { background: "#fff", padding: "20px 18px 14px", borderBottom: "1px solid #e2e8f0" },
+  appTitle: { fontSize: 28, fontWeight: 900, color: "#1e293b" },
+  levelTag: { fontSize: 13, color: "#6366f1", fontWeight: 700, marginTop: 2 },
+  pill: (_, bg, col) => ({ background: bg, color: col, padding: "6px 12px", borderRadius: 20, fontWeight: 700, fontSize: 13 }),
+  xpBg: { background: "#e2e8f0", borderRadius: 10, height: 10, overflow: "hidden" },
+  xpFill: { height: "100%", background: "linear-gradient(90deg,#6366f1,#a78bfa)", borderRadius: 10, transition: "width 0.6s ease" },
+  filterRow: { display: "flex", gap: 8, padding: "12px 18px", background: "#fff", borderBottom: "1px solid #f1f5f9" },
+  filterBtn: { border: "none", borderRadius: 20, padding: "7px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "all 0.2s" },
+  scroll: { flex: 1, overflowY: "auto", padding: "16px 18px 0" },
+  unitCard: { background: "#fff", borderRadius: 16, padding: "14px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", cursor: "pointer" },
+  barBg: { background: "#e2e8f0", borderRadius: 6, height: 5, marginTop: 6, overflow: "hidden" },
+  barFill: { height: "100%", borderRadius: 6, transition: "width 0.5s" },
+  nav: { position: "sticky", bottom: 0, background: "#fff", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-around", padding: "10px 0 18px" },
+  navBtn: { background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 },
+  hero: { padding: "50px 20px 28px", display: "flex", flexDirection: "column", alignItems: "center", color: "#fff", position: "relative" },
+  backBtnW: { position: "absolute", top: 14, left: 14, background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 26, fontWeight: 700, width: 42, height: 42, borderRadius: 12, cursor: "pointer" },
+  modeGrid: { display: "flex", gap: 10, marginBottom: 4 },
+  modeBtn: { flex: 1, background: "#fff", border: "2px solid", borderRadius: 16, padding: "14px 6px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 },
+  wordRow: { display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #f8fafc" },
+  dot: { width: 10, height: 10, borderRadius: "50%", flexShrink: 0 },
+  sentBox: { background: "#f8fafc", borderRadius: 14, padding: "14px 16px", marginBottom: 8, borderLeft: "3px solid #6366f1" },
+  topBar: { background: "#fff", padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e2e8f0" },
+  backBtn: { background: "none", border: "none", fontSize: 17, color: "#6366f1", fontWeight: 700, cursor: "pointer" },
+  prog: { fontWeight: 700, fontSize: 15, color: "#475569" },
+  donePage: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 4 },
+  bigBtn: { width: "100%", border: "none", borderRadius: 16, padding: 16, color: "#fff", fontWeight: 800, fontSize: 16, cursor: "pointer" },
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
